@@ -15,8 +15,8 @@
       --good: #2ecc71;
       --danger: #ff6b6b;
       --titleBlue: #7fb3ff;
-      --sidebar: 170px;         /* 왼쪽 패널 기본 너비 */
-      --gutter: 6px;            /* 리사이저 두께 */
+      --sidebar: 340px;         /* ← 왼쪽 패널 원래 크기로 복원 */
+      --gutter: 6px;
     }
     [data-theme="light"]{
       --bg:#f7f8fc; --panel:#fff; --text:#0d1220; --muted:#5a6070;
@@ -77,11 +77,6 @@
     .chip {font-size:.92em; padding:6px 10px; border:1px solid var(--border); border-radius:999px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; background: color-mix(in hsl, var(--panel) 88%, black 4%); white-space: nowrap;}
     .chip:hover { border-color: var(--accent) }
     .ptitle { font-weight:800; color: var(--titleBlue); }
-    .vrange { color: var(--muted); font-weight:700 }
-
-    /* 왼쪽 전체 50% 축소 표시 */
-    .zoomWrap { transform: scale(.5); transform-origin: top left; width: 200%; } /* 시각적으로 절반 크기 */
-    .leftScroller { overflow: auto; padding: 12px; }
 
     /* Content */
     .para-title { font-weight:800; font-size: 16px; color: var(--titleBlue) }
@@ -112,7 +107,6 @@
 
     @media (max-width: 920px) {
       .layout { grid-template-columns: 1fr var(--gutter) 1fr } /* 모바일에선 반반 */
-      .zoomWrap { transform: scale(.8); width:125%; } /* 모바일 가독성 보정 */
     }
   </style>
 </head>
@@ -125,12 +119,10 @@
   </header>
 
   <div class="layout" id="layoutRoot">
-    <!-- LEFT: Tree (zoomed to 50%) -->
+    <!-- LEFT: Tree (원래 크기) -->
     <aside class="card" id="leftPane">
-      <div class="leftScroller">
-        <div class="zoomWrap">
-          <div id="tree"></div>
-        </div>
+      <div class="scroller">
+        <div id="tree"></div>
       </div>
     </aside>
 
@@ -235,8 +227,8 @@ async function tryFetchJSON(path){
 
 /* ===== Draggable Resizer ===== */
 (function setupResizer(){
-  const layout = el('layoutRoot');
-  const resizer = el('resizer');
+  const layout = document.getElementById('layoutRoot');
+  const resizer = document.getElementById('resizer');
   let dragging = false;
 
   const onDown = (e)=>{ dragging = true; resizer.classList.add('dragging'); document.body.style.cursor='col-resize'; e.preventDefault(); };
@@ -244,9 +236,9 @@ async function tryFetchJSON(path){
     if(!dragging) return;
     const cx = (e.touches?.[0]?.clientX ?? e.clientX);
     const rect = layout.getBoundingClientRect();
-    let w = cx - rect.left;               // 왼쪽 경계에서 마우스까지
-    const min = 110;                      // 최소
-    const max = Math.min(rect.width * 0.6, rect.width - 220); // 최대(좌측 60% 또는 우측 최소폭 보장)
+    let w = cx - rect.left;
+    const min = 110;
+    const max = Math.min(rect.width * 0.6, rect.width - 220);
     w = Math.max(min, Math.min(max, w));
     document.documentElement.style.setProperty('--sidebar', w + 'px');
   };
@@ -294,13 +286,9 @@ function buildTree(){
         chip.className = 'chip';
         chip.title = p.ref;
 
-        // (시작절-끝절) 추출
-        const m = String(p.ref||'').match(/^(\d+):(\d+)(?:-(\d+))?$/);
-        let v1 = '?', v2 = '?';
-        if(m){ v1 = m[2]; v2 = m[3] || m[2]; }
+        // 왼쪽 리스트에는 "단락 타이틀만" 표시
         const titleText = p.title || p.ref;
-
-        chip.innerHTML = `<span class="vrange">(${v1}-${v2})</span> <span class="ptitle">${escapeHtml(titleText)}</span>`;
+        chip.innerHTML = `<span class="ptitle">${escapeHtml(titleText)}</span>`;
         chip.addEventListener('click', ()=> selectParagraph(bookName, ch, idx));
         parWrap.appendChild(chip);
       });
