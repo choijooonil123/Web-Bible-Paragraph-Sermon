@@ -15,14 +15,20 @@
       --good: #2ecc71;
       --danger: #ff6b6b;
       --titleBlue: #7fb3ff;
-      --sidebar: 170px; /* ← 왼쪽 트리 너비: 기존 340px의 1/2 로 축소 */
+      --sidebar: 170px;         /* 왼쪽 패널 기본 너비 */
+      --gutter: 6px;            /* 리사이저 두께 */
     }
     [data-theme="light"]{
-      --bg:#f7f8fc; --panel:#fff; --text:#0d1220; --muted:#5a6070; --accent:#2a5eea; --border:#e6e9f2; --good:#22bb66; --danger:#ff5b5b; --titleBlue:#2a5eea;
+      --bg:#f7f8fc; --panel:#fff; --text:#0d1220; --muted:#5a6070;
+      --accent:#2a5eea; --border:#e6e9f2; --good:#22bb66; --danger:#ff5b5b; --titleBlue:#2a5eea;
     }
     * { box-sizing: border-box }
     html, body { height: 100% }
-    body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", sans-serif; background: var(--bg); color: var(--text); display: grid; grid-template-rows: 56px 1fr; gap: 10px; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+      background: var(--bg); color: var(--text);
+      display: grid; grid-template-rows: 56px 1fr; gap: 10px;
+    }
 
     header { display:flex; align-items:center; gap:12px; padding: 8px 12px; background: var(--panel); border-bottom: 1px solid var(--border); position: sticky; top:0; z-index: 5; }
     header h1 { font-size: 16px; margin: 0; font-weight: 700; letter-spacing: .2px }
@@ -33,13 +39,33 @@
     .primary { background: linear-gradient(180deg,color-mix(in srgb, var(--accent) 75%, white 10%), color-mix(in srgb, var(--accent) 75%, black 20%)); border-color:color-mix(in srgb, var(--accent) 70%, black 10%) }
     .danger { border-color:var(--danger); }
 
-    /* ← 왼쪽 1/2 축소 반영 */
-    .layout { display:grid; grid-template-columns: var(--sidebar) 1fr; gap: 10px; padding: 0 10px 12px }
+    /* 레이아웃: 좌측, 리사이저, 우측 */
+    .layout {
+      display:grid;
+      grid-template-columns: var(--sidebar) var(--gutter) 1fr;
+      gap: 10px; padding: 0 10px 12px;
+      align-items: stretch;
+    }
     .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; display:flex; flex-direction:column; min-width:0; }
     .scroller { overflow:auto; padding: 12px; }
     .footer { padding:8px 12px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap: wrap }
     .grow { flex:1 1 auto }
     .muted { color: var(--muted) }
+
+    /* 리사이저 */
+    #resizer {
+      background: color-mix(in hsl, var(--panel) 70%, black 10%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: col-resize;
+      position: relative;
+    }
+    #resizer::after {
+      content:''; position:absolute; top:50%; left:50%; transform: translate(-50%,-50%);
+      width: 2px; height: 28px; background: color-mix(in hsl, var(--muted) 70%, transparent);
+      border-radius: 2px;
+    }
+    #resizer.dragging { background: color-mix(in hsl, var(--accent) 35%, var(--panel) 65%); }
 
     /* Sidebar tree */
     #tree { padding: 8px; }
@@ -48,10 +74,14 @@
     summary::-webkit-details-marker { display:none; }
     .tw { font-weight:700 }
     .chapters, .paras { display: grid; gap: 6px; margin-top:6px }
-    .chip {font-size:.92em; padding:6px 10px; border:1px solid var(--border); border-radius:999px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; background: color-mix(in hsl, var(--panel) 88%, black 4%); }
+    .chip {font-size:.92em; padding:6px 10px; border:1px solid var(--border); border-radius:999px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; background: color-mix(in hsl, var(--panel) 88%, black 4%); white-space: nowrap;}
     .chip:hover { border-color: var(--accent) }
     .ptitle { font-weight:800; color: var(--titleBlue); }
-    .vrange { color: var(--muted); font-weight:700 } /* (시-종) */
+    .vrange { color: var(--muted); font-weight:700 }
+
+    /* 왼쪽 전체 50% 축소 표시 */
+    .zoomWrap { transform: scale(.5); transform-origin: top left; width: 200%; } /* 시각적으로 절반 크기 */
+    .leftScroller { overflow: auto; padding: 12px; }
 
     /* Content */
     .para-title { font-weight:800; font-size: 16px; color: var(--titleBlue) }
@@ -80,7 +110,10 @@
     .editor-bar { display:flex; gap:8px; align-items:center; flex-wrap:wrap }
     .editor-bar .grow { flex:1 1 auto }
 
-    @media (max-width: 920px) { .layout { grid-template-columns: 1fr } }
+    @media (max-width: 920px) {
+      .layout { grid-template-columns: 1fr var(--gutter) 1fr } /* 모바일에선 반반 */
+      .zoomWrap { transform: scale(.8); width:125%; } /* 모바일 가독성 보정 */
+    }
   </style>
 </head>
 <body>
@@ -91,14 +124,21 @@
     <div class="pill"><span class="muted">단축키:</span> <span class="kbd">S</span> 재생/중지 <span class="kbd">N</span> 다음 단락</div>
   </header>
 
-  <div class="layout">
-    <!-- LEFT: Tree (1/2로 축소됨) -->
-    <aside class="card">
-      <div id="tree" class="scroller"></div>
+  <div class="layout" id="layoutRoot">
+    <!-- LEFT: Tree (zoomed to 50%) -->
+    <aside class="card" id="leftPane">
+      <div class="leftScroller">
+        <div class="zoomWrap">
+          <div id="tree"></div>
+        </div>
+      </div>
     </aside>
 
+    <!-- RESIZER -->
+    <div id="resizer" title="경계 드래그로 크기 조절"></div>
+
     <!-- RIGHT: Content -->
-    <section class="card" id="contentCard">
+    <section class="card" id="contentPane">
       <div class="scroller">
         <div class="para-title" id="paraTitle">성경을 선택하세요</div>
         <div id="paraToolbar" class="toolbar"></div>
@@ -165,13 +205,18 @@ const sermonThumbs = el('sermonThumbs');
 const sermonImages = el('sermonImages');
 const editorSpeakBtn = el('editorSpeak');
 
+const SIDEBAR_KEY = 'wbps.sidebar.px';
 const STORAGE_SERMON = 'wbps.sermons.v3';
 let BIBLE = null;
 let CURRENT = { book:null, chap:null, paraIdx:null, paraId:null };
 let READER = { playing:false, q:[], idx:0, synth: window.speechSynthesis||null };
 let EDITOR_READER = { playing:false, u:null, synth: window.speechSynthesis||null };
 
-/* ===== Boot (auto-load bible JSON) ===== */
+/* ===== Boot (auto-load bible JSON) + restore sidebar width ===== */
+(function restoreSidebar(){
+  const saved = +localStorage.getItem(SIDEBAR_KEY);
+  if(saved && saved > 80) document.documentElement.style.setProperty('--sidebar', saved+'px');
+})();
 (async function boot(){
   try{
     BIBLE = await tryFetchJSON('bible-paragraph.json');
@@ -187,6 +232,38 @@ async function tryFetchJSON(path){
   if(!res.ok) throw new Error('fetch failed');
   return await res.json();
 }
+
+/* ===== Draggable Resizer ===== */
+(function setupResizer(){
+  const layout = el('layoutRoot');
+  const resizer = el('resizer');
+  let dragging = false;
+
+  const onDown = (e)=>{ dragging = true; resizer.classList.add('dragging'); document.body.style.cursor='col-resize'; e.preventDefault(); };
+  const onMove = (e)=>{
+    if(!dragging) return;
+    const cx = (e.touches?.[0]?.clientX ?? e.clientX);
+    const rect = layout.getBoundingClientRect();
+    let w = cx - rect.left;               // 왼쪽 경계에서 마우스까지
+    const min = 110;                      // 최소
+    const max = Math.min(rect.width * 0.6, rect.width - 220); // 최대(좌측 60% 또는 우측 최소폭 보장)
+    w = Math.max(min, Math.min(max, w));
+    document.documentElement.style.setProperty('--sidebar', w + 'px');
+  };
+  const onUp = ()=>{
+    if(!dragging) return;
+    dragging = false; resizer.classList.remove('dragging'); document.body.style.cursor='';
+    const cur = getComputedStyle(document.documentElement).getPropertyValue('--sidebar').trim();
+    const px = parseInt(cur,10); if(px>0) localStorage.setItem(SIDEBAR_KEY, String(px));
+  };
+
+  resizer.addEventListener('mousedown', onDown);
+  resizer.addEventListener('touchstart', onDown, {passive:false});
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('touchmove', onMove, {passive:false});
+  window.addEventListener('mouseup', onUp);
+  window.addEventListener('touchend', onUp);
+})();
 
 /* ===== Tree (Books → Chapters → Paragraphs) ===== */
 function buildTree(){
