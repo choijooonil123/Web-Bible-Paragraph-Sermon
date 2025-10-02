@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Web Bible – Paragraph Sermon (Books → Chapters → Paragraphs)</title>
+  <title>Web Bible – Paragraph Sermon</title>
   <style>
     :root {
       --bg: #0f1115;
@@ -14,7 +14,8 @@
       --border: #252a36;
       --good: #2ecc71;
       --danger: #ff6b6b;
-      --titleBlue: #7fb3ff; /* 단락 타이틀 밝은 파랑 */
+      --titleBlue: #7fb3ff;
+      --sidebar: 170px; /* ← 왼쪽 트리 너비: 기존 340px의 1/2 로 축소 */
     }
     [data-theme="light"]{
       --bg:#f7f8fc; --panel:#fff; --text:#0d1220; --muted:#5a6070; --accent:#2a5eea; --border:#e6e9f2; --good:#22bb66; --danger:#ff5b5b; --titleBlue:#2a5eea;
@@ -26,13 +27,19 @@
     header { display:flex; align-items:center; gap:12px; padding: 8px 12px; background: var(--panel); border-bottom: 1px solid var(--border); position: sticky; top:0; z-index: 5; }
     header h1 { font-size: 16px; margin: 0; font-weight: 700; letter-spacing: .2px }
     .pill { border:1px solid var(--border); background:color-mix(in hsl, var(--panel) 80%, black 10%); padding: 6px 8px; border-radius: 10px; display:flex; gap:8px; align-items:center; }
+    .kbd { border:1px solid var(--border); background:color-mix(in hsl, var(--panel) 70%, black 15%); border-radius:6px; padding: 2px 6px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:.9em }
     button { background:color-mix(in hsl, var(--panel) 65%, black 10%); color:var(--text); border:1px solid var(--border); border-radius: 10px; padding: 6px 10px; cursor:pointer }
     button:hover { border-color:color-mix(in hsl, var(--border) 80%, var(--accent) 20%) }
     .primary { background: linear-gradient(180deg,color-mix(in srgb, var(--accent) 75%, white 10%), color-mix(in srgb, var(--accent) 75%, black 20%)); border-color:color-mix(in srgb, var(--accent) 70%, black 10%) }
+    .danger { border-color:var(--danger); }
 
-    .layout { display:grid; grid-template-columns: 340px 1fr; gap: 10px; padding: 0 10px 12px }
+    /* ← 왼쪽 1/2 축소 반영 */
+    .layout { display:grid; grid-template-columns: var(--sidebar) 1fr; gap: 10px; padding: 0 10px 12px }
     .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; display:flex; flex-direction:column; min-width:0; }
     .scroller { overflow:auto; padding: 12px; }
+    .footer { padding:8px 12px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap: wrap }
+    .grow { flex:1 1 auto }
+    .muted { color: var(--muted) }
 
     /* Sidebar tree */
     #tree { padding: 8px; }
@@ -41,9 +48,10 @@
     summary::-webkit-details-marker { display:none; }
     .tw { font-weight:700 }
     .chapters, .paras { display: grid; gap: 6px; margin-top:6px }
-    .chip {font-size:.95em; padding:6px 10px; border:1px solid var(--border); border-radius:999px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; background: color-mix(in hsl, var(--panel) 88%, black 4%); }
+    .chip {font-size:.92em; padding:6px 10px; border:1px solid var(--border); border-radius:999px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; background: color-mix(in hsl, var(--panel) 88%, black 4%); }
     .chip:hover { border-color: var(--accent) }
-    .ptitle { font-weight:800; color: var(--titleBlue); } /* 단락 타이틀: 진하게 밝은 파랑 */
+    .ptitle { font-weight:800; color: var(--titleBlue); }
+    .vrange { color: var(--muted); font-weight:700 } /* (시-종) */
 
     /* Content */
     .para-title { font-weight:800; font-size: 16px; color: var(--titleBlue) }
@@ -54,23 +62,23 @@
     .line:hover { background:color-mix(in hsl, var(--panel) 80%, black 12%) }
     .line.reading { background: color-mix(in hsl, var(--accent) 15%, black 0%); border-left-color: var(--accent) }
 
-    .footer { padding:8px 12px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap: wrap }
-    .grow { flex:1 1 auto }
-
-    /* Sermon modal */
+    /* Sermon modal — wide + TTS */
     .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:50; }
-    .modal { width:min(920px, 92vw); max-height: 90vh; overflow:auto; background:var(--panel); border:1px solid var(--border); border-radius:14px; }
-    .modal .head { position:sticky; top:0; background:var(--panel); padding:10px 12px; display:flex; gap:8px; align-items:center }
-    .list { padding: 8px 12px; display:grid; gap:8px }
-    .item { border:1px solid var(--border); border-radius:10px; padding:8px 10px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+    .modal { width:min(1200px, 96vw); max-height: 94vh; overflow:auto; background:var(--panel); border:1px solid var(--border); border-radius:14px; }
+    .modal .head { position:sticky; top:0; background:var(--panel); padding:12px 14px; display:flex; gap:10px; align-items:center; border-bottom:1px solid var(--border) }
+    .list { padding: 12px 14px; display:grid; gap:8px }
+    .item { border:1px solid var(--border); border-radius:10px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
     .item-title { font-weight:700 }
     .item-date { color: var(--muted); font-size:.92em }
 
-    .editor { padding: 12px; display:grid; gap:10px }
+    .editor { padding: 14px; display:grid; gap:12px }
     .editor input[type="text"], .editor textarea { width:100% }
-    .editor textarea { min-height: 180px; resize:vertical }
+    .editor input[type="text"] { font-size: 18px; padding:10px 12px }
+    .editor textarea { min-height: 360px; resize:vertical; font-size: 16px; padding:12px }
     .thumbs { display:flex; gap:8px; flex-wrap: wrap }
-    .thumbs img { width:96px; height:96px; object-fit:cover; border-radius:10px; border:1px solid var(--border) }
+    .thumbs img { width:112px; height:112px; object-fit:cover; border-radius:10px; border:1px solid var(--border) }
+    .editor-bar { display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+    .editor-bar .grow { flex:1 1 auto }
 
     @media (max-width: 920px) { .layout { grid-template-columns: 1fr } }
   </style>
@@ -84,12 +92,12 @@
   </header>
 
   <div class="layout">
-    <!-- LEFT: Tree (no head bar) -->
+    <!-- LEFT: Tree (1/2로 축소됨) -->
     <aside class="card">
       <div id="tree" class="scroller"></div>
     </aside>
 
-    <!-- RIGHT: Content (no head bar) -->
+    <!-- RIGHT: Content -->
     <section class="card" id="contentCard">
       <div class="scroller">
         <div class="para-title" id="paraTitle">성경을 선택하세요</div>
@@ -103,7 +111,7 @@
     </section>
   </div>
 
-  <!-- Sermon Modal -->
+  <!-- Sermon Modal (WIDER + TTS) -->
   <div id="modalWrap" class="modal-backdrop" aria-hidden="true">
     <div class="modal">
       <div class="head">
@@ -112,28 +120,32 @@
         <div class="grow"></div>
         <button id="closeModal">닫기</button>
       </div>
+
       <div class="list" id="sermonList"></div>
+
       <div class="editor" id="sermonEditor" style="display:none">
         <input type="text" id="sermonTitle" placeholder="설교 제목" />
         <textarea id="sermonBody" placeholder="설교 본문(텍스트)"></textarea>
-        <div class="thumbs" id="sermonThumbs"></div>
-        <div class="toolbar">
+
+        <div class="editor-bar">
           <input type="file" id="sermonImages" accept="image/*" multiple />
           <div class="grow"></div>
+          <button id="editorSpeak" class="primary">낭독</button>
           <button id="saveSermon" class="primary">저장</button>
           <button id="cancelEdit">취소</button>
         </div>
+
+        <div class="thumbs" id="sermonThumbs"></div>
       </div>
-      <div class="footer">
+
+      <div class="footer" style="padding:10px 14px; border-top:1px solid var(--border)">
         <button id="newSermonBtn" class="primary">새 설교</button>
       </div>
     </div>
   </div>
 
 <script>
-/** =========================
- * App State
- * ========================= */
+/* ===== State ===== */
 const el = id => document.getElementById(id);
 const treeEl = el('tree');
 const contentEl = el('content');
@@ -143,7 +155,6 @@ const themeBtn = el('themeBtn');
 const themeName = el('themeName');
 const paraToolbar = el('paraToolbar');
 
-// Modal
 const modalWrap = el('modalWrap');
 const modalRef = el('modalRef');
 const sermonList = el('sermonList');
@@ -152,15 +163,15 @@ const sermonTitle = el('sermonTitle');
 const sermonBody = el('sermonBody');
 const sermonThumbs = el('sermonThumbs');
 const sermonImages = el('sermonImages');
+const editorSpeakBtn = el('editorSpeak');
 
 const STORAGE_SERMON = 'wbps.sermons.v3';
 let BIBLE = null;
 let CURRENT = { book:null, chap:null, paraIdx:null, paraId:null };
 let READER = { playing:false, q:[], idx:0, synth: window.speechSynthesis||null };
+let EDITOR_READER = { playing:false, u:null, synth: window.speechSynthesis||null };
 
-/** =========================
- * Load Bible JSON automatically on start
- * ========================= */
+/* ===== Boot (auto-load bible JSON) ===== */
 (async function boot(){
   try{
     BIBLE = await tryFetchJSON('bible-paragraph.json');
@@ -171,16 +182,13 @@ let READER = { playing:false, q:[], idx:0, synth: window.speechSynthesis||null }
   buildTree();
   status('불러오기 완료. 66권 트리가 활성화되었습니다.');
 })();
-
 async function tryFetchJSON(path){
   const res = await fetch(path, {cache:'no-store'});
   if(!res.ok) throw new Error('fetch failed');
   return await res.json();
 }
 
-/** =========================
- * Tree building (books -> chapters -> paragraphs)
- * ========================= */
+/* ===== Tree (Books → Chapters → Paragraphs) ===== */
 function buildTree(){
   treeEl.innerHTML = '';
   if(!BIBLE){ treeEl.innerHTML = `<div class="muted">파일을 찾을 수 없습니다.</div>`; return; }
@@ -191,17 +199,16 @@ function buildTree(){
     sumBook.innerHTML = `<span class="tw">${bookName}</span>`;
     detBook.appendChild(sumBook);
 
-    // Chapters
     const chWrap = document.createElement('div');
     chWrap.className = 'chapters';
     const chapters = Object.keys(BIBLE.books[bookName]).map(n=>parseInt(n,10)).sort((a,b)=>a-b);
+
     for(const ch of chapters){
       const detChap = document.createElement('details');
       const sumChap = document.createElement('summary');
       sumChap.innerHTML = `<span class="chip">${ch}장</span>`;
       detChap.appendChild(sumChap);
 
-      // Paragraphs
       const parWrap = document.createElement('div');
       parWrap.className = 'paras';
       const paras = BIBLE.books[bookName][ch].paras || [];
@@ -209,8 +216,14 @@ function buildTree(){
         const chip = document.createElement('div');
         chip.className = 'chip';
         chip.title = p.ref;
+
+        // (시작절-끝절) 추출
+        const m = String(p.ref||'').match(/^(\d+):(\d+)(?:-(\d+))?$/);
+        let v1 = '?', v2 = '?';
+        if(m){ v1 = m[2]; v2 = m[3] || m[2]; }
         const titleText = p.title || p.ref;
-        chip.innerHTML = `<span class="ptitle">${escapeHtml(titleText)}</span>`;
+
+        chip.innerHTML = `<span class="vrange">(${v1}-${v2})</span> <span class="ptitle">${escapeHtml(titleText)}</span>`;
         chip.addEventListener('click', ()=> selectParagraph(bookName, ch, idx));
         parWrap.appendChild(chip);
       });
@@ -223,21 +236,18 @@ function buildTree(){
   }
 }
 
-/** =========================
- * Selecting & rendering
- * ========================= */
+/* ===== Selection & Render ===== */
 function selectParagraph(book, chap, idx){
   CURRENT.book = book;
   CURRENT.chap = chap;
   CURRENT.paraIdx = idx;
 
-  const chapObj = BIBLE.books[book][chap];
-  const para = chapObj.paras[idx];
+  const para = BIBLE.books[book][chap].paras[idx];
   CURRENT.paraId = `${book}|${chap}|${para.ref}`;
 
   paraTitleEl.textContent = `${para.title || para.ref}  (${para.ref})`;
 
-  // Paragraph toolbar (inline) — 낭독/설교 + 다음 단락 낭독 체크
+  // inline controls: 낭독 / 다음 단락 낭독 / 설교
   paraToolbar.innerHTML = '';
   const speakSmall = makeBtn('낭독', ()=>toggleSpeak(), {id:'speakSmall', className:'primary'});
   const autoWrap = document.createElement('label');
@@ -246,7 +256,7 @@ function selectParagraph(book, chap, idx){
   const sermSmall  = makeBtn('설교', ()=>openSermonModal(), {id:'sermSmall'});
   paraToolbar.append(speakSmall, autoWrap, sermSmall);
 
-  // Content
+  // content
   contentEl.innerHTML = '';
   para.verses.forEach(([v,t])=>{
     const line = document.createElement('div');
@@ -258,7 +268,6 @@ function selectParagraph(book, chap, idx){
 
   status(`선택됨: ${book} ${chap}장 · ${para.title||para.ref}`);
 }
-
 function makeBtn(label, onclick, opts={}){
   const b = document.createElement('button');
   b.textContent = label;
@@ -268,20 +277,14 @@ function makeBtn(label, onclick, opts={}){
   return b;
 }
 
-/** =========================
- * Reading (TTS)
- * ========================= */
+/* ===== Paragraph TTS ===== */
 function buildQueue(){
   if(!BIBLE || CURRENT.paraIdx==null) return [];
   const {book, chap, paraIdx} = CURRENT;
   const para = BIBLE.books[book][chap].paras[paraIdx];
   return para.verses.map(([v,t])=>({verse:v, text:t}));
 }
-
-function clearReadingHighlight(){
-  [...contentEl.querySelectorAll('.line')].forEach(el=> el.classList.remove('reading'));
-}
-
+function clearReadingHighlight(){ [...contentEl.querySelectorAll('.line')].forEach(el=> el.classList.remove('reading')); }
 function speakVerseItem(item, onend){
   if(!READER.synth) return;
   const u = new SpeechSynthesisUtterance(item.text);
@@ -293,101 +296,64 @@ function speakVerseItem(item, onend){
   };
   u.onend = onend;
   READER.synth.speak(u);
-  return u;
 }
-
 function toggleSpeak(){
-  if(!BIBLE || CURRENT.paraIdx==null) return;
-  if(!READER.synth){ return alert('이 브라우저는 음성합성을 지원하지 않습니다.'); }
+  if(!READER.synth) return alert('이 브라우저는 음성합성을 지원하지 않습니다.');
+  if(CURRENT.paraIdx==null) return;
 
-  if(READER.playing){
-    stopSpeak();
-    return;
-  }
-  READER.q = buildQueue();
-  READER.idx = 0;
-  READER.playing = true;
-  updateSpeakButtons();
-  playNextInQueue();
+  if(READER.playing){ stopSpeak(); return; }
+  READER.q = buildQueue(); READER.idx = 0; READER.playing = true; updateSpeakButtons(); playNextInQueue();
 }
-
 function playNextInQueue(){
   if(!READER.playing) return;
   if(READER.idx >= READER.q.length){
-    const autoNext = el('autoNext');
-    if(autoNext && autoNext.checked){
-      if(goToNextParagraph()){
-        READER.q = buildQueue();
-        READER.idx = 0;
-        playNextInQueue();
-        return;
-      }
-    }
-    stopSpeak();
-    return;
+    const an = el('autoNext');
+    if(an && an.checked && goToNextParagraph()){ READER.q = buildQueue(); READER.idx = 0; playNextInQueue(); return; }
+    stopSpeak(); return;
   }
   const item = READER.q[READER.idx];
   speakVerseItem(item, ()=>{ READER.idx++; playNextInQueue(); });
 }
-
 function stopSpeak(){
   READER.playing = false;
   try{ READER.synth && READER.synth.cancel(); }catch(e){}
   clearReadingHighlight();
   updateSpeakButtons();
 }
-
 function updateSpeakButtons(){
   const label = READER.playing ? '중지' : '낭독';
   const small = el('speakSmall');
   if(small) small.textContent = label;
 }
-
 function goToNextParagraph(){
   const {book, chap, paraIdx} = CURRENT;
   const chObj = BIBLE.books[book][chap];
-  if(paraIdx < chObj.paras.length-1){
-    selectParagraph(book, chap, paraIdx+1);
-    return true;
-  }
+  if(paraIdx < chObj.paras.length-1){ selectParagraph(book, chap, paraIdx+1); return true; }
   const chapNums = Object.keys(BIBLE.books[book]).map(n=>parseInt(n,10)).sort((a,b)=>a-b);
   const chPos = chapNums.indexOf(chap);
   if(chPos >= 0 && chPos < chapNums.length-1){
     const nextChap = chapNums[chPos+1];
-    if((BIBLE.books[book][nextChap]?.paras||[]).length){
-      selectParagraph(book, nextChap, 0);
-      return true;
-    }
+    if((BIBLE.books[book][nextChap]?.paras||[]).length){ selectParagraph(book, nextChap, 0); return true; }
   }
   const books = Object.keys(BIBLE.books);
   const bPos = books.indexOf(book);
   if(bPos >= 0 && bPos < books.length-1){
     const nextBook = books[bPos+1];
     const firstChap = Math.min(...Object.keys(BIBLE.books[nextBook]).map(n=>parseInt(n,10)));
-    if((BIBLE.books[nextBook][firstChap]?.paras||[]).length){
-      selectParagraph(nextBook, firstChap, 0);
-      return true;
-    }
+    if((BIBLE.books[nextBook][firstChap]?.paras||[]).length){ selectParagraph(nextBook, firstChap, 0); return true; }
   }
   return false;
 }
-
-/* keyboard shortcuts */
+/* shortcuts */
 window.addEventListener('keydown', (e)=>{
   if(e.target && ['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
   if(e.key.toLowerCase()==='s'){ e.preventDefault(); toggleSpeak(); }
   if(e.key.toLowerCase()==='n'){ e.preventDefault(); if(goToNextParagraph()) { if(READER.playing){ stopSpeak(); toggleSpeak(); } } }
 });
 
-/** =========================
- * Sermons — per paragraph CRUD in localStorage
- * ========================= */
-function getSermonMap(){
-  try { return JSON.parse(localStorage.getItem(STORAGE_SERMON)||'{}'); } catch(e){ return {}; }
-}
-function setSermonMap(obj){
-  localStorage.setItem(STORAGE_SERMON, JSON.stringify(obj));
-}
+/* ===== Sermon CRUD + Modal ===== */
+function getSermonMap(){ try{ return JSON.parse(localStorage.getItem(STORAGE_SERMON)||'{}'); }catch(e){ return {}; } }
+function setSermonMap(o){ localStorage.setItem(STORAGE_SERMON, JSON.stringify(o)); }
 
 function openSermonModal(){
   if(!CURRENT.paraId) return;
@@ -396,18 +362,15 @@ function openSermonModal(){
   renderSermonList();
   sermonEditor.style.display = 'none';
   modalWrap.style.display = 'flex';
-  modalWrap.setAttribute('aria-hidden', 'false');
+  modalWrap.setAttribute('aria-hidden','false');
 }
-el('closeModal').onclick = () => { modalWrap.style.display='none'; modalWrap.setAttribute('aria-hidden','true'); };
+el('closeModal').onclick = ()=> { modalWrap.style.display='none'; modalWrap.setAttribute('aria-hidden','true'); stopEditorSpeak(true); };
 
 function renderSermonList(){
   const map = getSermonMap();
   const arr = map[CURRENT.paraId] || [];
   sermonList.innerHTML = '';
-  if(arr.length===0){
-    startNewSermon();
-    return;
-  }
+  if(arr.length===0){ startNewSermon(); return; }
   arr.forEach((it, idx)=>{
     const row = document.createElement('div');
     row.className = 'item';
@@ -419,40 +382,36 @@ function renderSermonList(){
       <div class="toolbar">
         <button data-edit="${idx}">편집</button>
         <button data-del="${idx}" class="danger">삭제</button>
-      </div>
-    `;
+      </div>`;
     row.querySelector('[data-edit]').onclick = ()=> editSermon(idx);
     row.querySelector('[data-del]').onclick = ()=> deleteSermon(idx);
     sermonList.appendChild(row);
   });
 }
-
 el('newSermonBtn').onclick = ()=> startNewSermon();
 
 function startNewSermon(){
-  sermonList.innerHTML = `<div class="muted" style="padding:0 12px">새 설교를 작성해 저장하면 이 단락에 붙습니다.</div>`;
+  sermonList.innerHTML = `<div class="muted" style="padding:0 14px">새 설교를 작성해 저장하면 이 단락에 붙습니다.</div>`;
   sermonEditor.style.display = '';
   sermonTitle.value = '';
   sermonBody.value = '';
   sermonThumbs.innerHTML = '';
   sermonImages.value = '';
   sermonEditor.dataset.editing = '';
+  stopEditorSpeak(true);
 }
 
 function editSermon(idx){
   const map = getSermonMap();
   const arr = map[CURRENT.paraId] || [];
-  const it = arr[idx];
-  if(!it) return;
+  const it = arr[idx]; if(!it) return;
   sermonEditor.style.display = '';
   sermonEditor.dataset.editing = String(idx);
   sermonTitle.value = it.title||'';
   sermonBody.value = it.body||'';
   sermonThumbs.innerHTML = '';
-  (it.images||[]).forEach(src=>{
-    const img = document.createElement('img');
-    img.src = src; sermonThumbs.appendChild(img);
-  });
+  (it.images||[]).forEach(src=>{ const img=new Image(); img.src=src; sermonThumbs.appendChild(img); });
+  stopEditorSpeak(true);
 }
 
 function deleteSermon(idx){
@@ -464,8 +423,7 @@ function deleteSermon(idx){
   setSermonMap(map);
   renderSermonList();
 }
-
-el('cancelEdit').onclick = ()=> { sermonEditor.style.display='none'; renderSermonList(); };
+el('cancelEdit').onclick = ()=> { sermonEditor.style.display='none'; renderSermonList(); stopEditorSpeak(true); };
 
 el('saveSermon').onclick = ()=> {
   const title = sermonTitle.value.trim() || '(제목 없음)';
@@ -478,13 +436,8 @@ el('saveSermon').onclick = ()=> {
   const arr = map[CURRENT.paraId] || [];
   const editing = sermonEditor.dataset.editing;
   if(editing!==''){
-    const idx = parseInt(editing,10);
-    if(arr[idx]){
-      arr[idx].title = title;
-      arr[idx].body = body;
-      arr[idx].images = imgs;
-      arr[idx].date = date; // last edited
-    }
+    const i = parseInt(editing,10);
+    if(arr[i]){ arr[i] = {...arr[i], title, body, images:imgs, date}; }
   } else {
     arr.unshift({ id: crypto.randomUUID(), title, body, images: imgs, date });
   }
@@ -493,19 +446,17 @@ el('saveSermon').onclick = ()=> {
   sermonEditor.style.display = 'none';
   renderSermonList();
   status('설교가 저장되었습니다.');
+  stopEditorSpeak(true);
 };
 
 sermonImages.addEventListener('change', async ()=>{
   const files = [...sermonImages.files||[]];
   for(const f of files){
     const data = await fileToDataURL(f);
-    const img = document.createElement('img');
-    img.src = data;
-    sermonThumbs.appendChild(img);
+    const img = new Image(); img.src = data; sermonThumbs.appendChild(img);
   }
   sermonImages.value = '';
 });
-
 function fileToDataURL(file){
   return new Promise((resolve, reject)=>{
     const reader = new FileReader();
@@ -515,9 +466,34 @@ function fileToDataURL(file){
   });
 }
 
-/** =========================
- * Theme / utils
- * ========================= */
+/* ===== Sermon Editor TTS ===== */
+editorSpeakBtn.onclick = ()=> toggleEditorSpeak();
+function toggleEditorSpeak(){
+  if(!EDITOR_READER.synth) return alert('이 브라우저는 음성합성을 지원하지 않습니다.');
+  if(EDITOR_READER.playing){ stopEditorSpeak(); return; }
+
+  const title = sermonTitle.value.trim();
+  const body  = sermonBody.value.trim();
+  const text = [title, body].filter(Boolean).join('. ');
+  if(!text){ alert('낭독할 내용이 없습니다.'); return; }
+
+  const u = new SpeechSynthesisUtterance(text.replace(/\n{2,}/g, '. ').replace(/\n/g, ' '));
+  u.lang = 'ko-KR'; u.rate = 0.96; u.pitch = 1.0;
+  u.onend = ()=> stopEditorSpeak(true);
+  EDITOR_READER.u = u;
+  EDITOR_READER.synth.cancel();
+  EDITOR_READER.synth.speak(u);
+  EDITOR_READER.playing = true;
+  editorSpeakBtn.textContent = '중지';
+}
+function stopEditorSpeak(silent){
+  if(EDITOR_READER.synth){ try{ EDITOR_READER.synth.cancel(); }catch(e){} }
+  EDITOR_READER.playing = false; EDITOR_READER.u = null;
+  if(!silent) status('설교 낭독을 중지했습니다.');
+  editorSpeakBtn.textContent = '낭독';
+}
+
+/* ===== Theme / Utils ===== */
 themeBtn.onclick = ()=>{
   const light = document.body.dataset.theme === 'light';
   document.body.dataset.theme = light ? '' : 'light';
