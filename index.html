@@ -15,12 +15,8 @@
       --good: #2ecc71;
       --danger: #ff6b6b;
       --titleBlue: #7fb3ff;
-      --sidebar: 340px;         /* ← 왼쪽 패널 원래 크기로 복원 */
+      --sidebar: 340px;
       --gutter: 6px;
-    }
-    [data-theme="light"]{
-      --bg:#f7f8fc; --panel:#fff; --text:#0d1220; --muted:#5a6070;
-      --accent:#2a5eea; --border:#e6e9f2; --good:#22bb66; --danger:#ff5b5b; --titleBlue:#2a5eea;
     }
     * { box-sizing: border-box }
     html, body { height: 100% }
@@ -39,7 +35,6 @@
     .primary { background: linear-gradient(180deg,color-mix(in srgb, var(--accent) 75%, white 10%), color-mix(in srgb, var(--accent) 75%, black 20%)); border-color:color-mix(in srgb, var(--accent) 70%, black 10%) }
     .danger { border-color:var(--danger); }
 
-    /* 레이아웃: 좌측, 리사이저, 우측 */
     .layout {
       display:grid;
       grid-template-columns: var(--sidebar) var(--gutter) 1fr;
@@ -73,53 +68,39 @@
     summary { cursor:pointer; list-style:none; display:flex; align-items:center; gap:8px; }
     summary::-webkit-details-marker { display:none; }
     .tw { font-weight:700 }
-    .chapters, .paras { display: grid; gap: 6px; margin-top:6px }
+    .chapters { display: grid; gap: 6px; margin-top:6px }
+    .paras { display: grid; gap: 6px; margin: 8px 0 2px 0 }
     .chip {font-size:.92em; padding:6px 10px; border:1px solid var(--border); border-radius:999px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; background: color-mix(in hsl, var(--panel) 88%, black 4%); white-space: nowrap;}
     .chip:hover { border-color: var(--accent) }
     .ptitle { font-weight:800; color: var(--titleBlue); }
+    .vrange { color: var(--muted); font-weight:700 }
 
-    /* Content */
+    /* 단락 토글 내부 UI */
+    .pbody { margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 8px; }
+    .ptoolbar { display:flex; gap:8px; align-items:center; flex-wrap: wrap; margin-bottom: 8px }
+    .pline { padding: 4px 6px; border-left: 3px solid transparent; border-radius: 8px; transition: background .15s, border-color .15s }
+    .pline:hover { background:color-mix(in hsl, var(--panel) 80%, black 12%) }
+    .pline.reading { background: color-mix(in hsl, var(--accent) 15%, black 0%); border-left-color: var(--accent) }
+    .pv { color: var(--muted); font-size: .88em; vertical-align: super; margin-right: 4px }
+
+    /* Right content */
     .para-title { font-weight:800; font-size: 16px; color: var(--titleBlue) }
-    .toolbar { display:flex; gap:8px; align-items:center; flex-wrap: wrap; margin:8px 0 6px 0 }
     .content { line-height: 1.9; font-size: 18px }
-    .v { color: var(--muted); font-size: .88em; vertical-align: super; margin-right: 4px }
-    .line { padding: 4px 6px; border-left: 3px solid transparent; border-radius: 8px; transition: background .15s, border-color .15s }
-    .line:hover { background:color-mix(in hsl, var(--panel) 80%, black 12%) }
-    .line.reading { background: color-mix(in hsl, var(--accent) 15%, black 0%); border-left-color: var(--accent) }
-
-    /* Sermon modal — wide + TTS */
-    .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:50; }
-    .modal { width:min(1200px, 96vw); max-height: 94vh; overflow:auto; background:var(--panel); border:1px solid var(--border); border-radius:14px; }
-    .modal .head { position:sticky; top:0; background:var(--panel); padding:12px 14px; display:flex; gap:10px; align-items:center; border-bottom:1px solid var(--border) }
-    .list { padding: 12px 14px; display:grid; gap:8px }
-    .item { border:1px solid var(--border); border-radius:10px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
-    .item-title { font-weight:700 }
-    .item-date { color: var(--muted); font-size:.92em }
-
-    .editor { padding: 14px; display:grid; gap:12px }
-    .editor input[type="text"], .editor textarea { width:100% }
-    .editor input[type="text"] { font-size: 18px; padding:10px 12px }
-    .editor textarea { min-height: 360px; resize:vertical; font-size: 16px; padding:12px }
-    .thumbs { display:flex; gap:8px; flex-wrap: wrap }
-    .thumbs img { width:112px; height:112px; object-fit:cover; border-radius:10px; border:1px solid var(--border) }
-    .editor-bar { display:flex; gap:8px; align-items:center; flex-wrap:wrap }
-    .editor-bar .grow { flex:1 1 auto }
 
     @media (max-width: 920px) {
-      .layout { grid-template-columns: 1fr var(--gutter) 1fr } /* 모바일에선 반반 */
+      .layout { grid-template-columns: 1fr var(--gutter) 1fr } /* 모바일 반반 */
     }
   </style>
 </head>
 <body>
   <header>
     <h1>Web Bible – Paragraph Sermon</h1>
-    <div class="pill"><button id="themeBtn" title="라이트/다크">테마</button></div>
     <div class="grow"></div>
     <div class="pill"><span class="muted">단축키:</span> <span class="kbd">S</span> 재생/중지 <span class="kbd">N</span> 다음 단락</div>
   </header>
 
   <div class="layout" id="layoutRoot">
-    <!-- LEFT: Tree (원래 크기) -->
+    <!-- LEFT: Tree (단락 토글 안에 버튼+시작/끝절+내용 포함) -->
     <aside class="card" id="leftPane">
       <div class="scroller">
         <div id="tree"></div>
@@ -129,16 +110,14 @@
     <!-- RESIZER -->
     <div id="resizer" title="경계 드래그로 크기 조절"></div>
 
-    <!-- RIGHT: Content -->
+    <!-- RIGHT: Content (선택 미러) -->
     <section class="card" id="contentPane">
       <div class="scroller">
         <div class="para-title" id="paraTitle">성경을 선택하세요</div>
-        <div id="paraToolbar" class="toolbar"></div>
         <div id="content" class="content"></div>
       </div>
       <div class="footer">
         <div class="muted" id="status">bible-paragraph.json을 불러오는 중…</div>
-        <div class="muted">현재 테마: <span id="themeName">Dark</span></div>
       </div>
     </section>
   </div>
@@ -152,13 +131,10 @@
         <div class="grow"></div>
         <button id="closeModal">닫기</button>
       </div>
-
       <div class="list" id="sermonList"></div>
-
       <div class="editor" id="sermonEditor" style="display:none">
         <input type="text" id="sermonTitle" placeholder="설교 제목" />
         <textarea id="sermonBody" placeholder="설교 본문(텍스트)"></textarea>
-
         <div class="editor-bar">
           <input type="file" id="sermonImages" accept="image/*" multiple />
           <div class="grow"></div>
@@ -166,10 +142,8 @@
           <button id="saveSermon" class="primary">저장</button>
           <button id="cancelEdit">취소</button>
         </div>
-
         <div class="thumbs" id="sermonThumbs"></div>
       </div>
-
       <div class="footer" style="padding:10px 14px; border-top:1px solid var(--border)">
         <button id="newSermonBtn" class="primary">새 설교</button>
       </div>
@@ -183,9 +157,6 @@ const treeEl = el('tree');
 const contentEl = el('content');
 const paraTitleEl = el('paraTitle');
 const statusEl = el('status');
-const themeBtn = el('themeBtn');
-const themeName = el('themeName');
-const paraToolbar = el('paraToolbar');
 
 const modalWrap = el('modalWrap');
 const modalRef = el('modalRef');
@@ -198,10 +169,12 @@ const sermonImages = el('sermonImages');
 const editorSpeakBtn = el('editorSpeak');
 
 const SIDEBAR_KEY = 'wbps.sidebar.px';
-const STORAGE_SERMON = 'wbps.sermons.v3';
+const STORAGE_SERMON = 'wbps.sermons.v4';
+
 let BIBLE = null;
 let CURRENT = { book:null, chap:null, paraIdx:null, paraId:null };
-let READER = { playing:false, q:[], idx:0, synth: window.speechSynthesis||null };
+let READER = { playing:false, q:[], idx:0, synth: window.speechSynthesis||null, scope:null, btn:null };// scope: paragraph container
+
 let EDITOR_READER = { playing:false, u:null, synth: window.speechSynthesis||null };
 
 /* ===== Boot (auto-load bible JSON) + restore sidebar width ===== */
@@ -257,7 +230,7 @@ async function tryFetchJSON(path){
   window.addEventListener('touchend', onUp);
 })();
 
-/* ===== Tree (Books → Chapters → Paragraphs) ===== */
+/* ===== Tree (Books → Chapters → Paragraphs with inline content) ===== */
 function buildTree(){
   treeEl.innerHTML = '';
   if(!BIBLE){ treeEl.innerHTML = `<div class="muted">파일을 찾을 수 없습니다.</div>`; return; }
@@ -282,15 +255,61 @@ function buildTree(){
       parWrap.className = 'paras';
       const paras = BIBLE.books[bookName][ch].paras || [];
       paras.forEach((p, idx)=>{
-        const chip = document.createElement('div');
-        chip.className = 'chip';
-        chip.title = p.ref;
+        const detPara = document.createElement('details');
+        detPara.className = 'para';
 
-        // 왼쪽 리스트에는 "단락 타이틀만" 표시
+        // (시작절-끝절)
+        const m = String(p.ref||'').match(/^(\d+):(\d+)(?:-(\d+))?$/);
+        const v1 = m ? m[2] : '?', v2 = m ? (m[3]||m[2]) : '?';
         const titleText = p.title || p.ref;
-        chip.innerHTML = `<span class="ptitle">${escapeHtml(titleText)}</span>`;
-        chip.addEventListener('click', ()=> selectParagraph(bookName, ch, idx));
-        parWrap.appendChild(chip);
+
+        const sum = document.createElement('summary');
+        sum.innerHTML = `<span class="vrange">(${v1}-${v2})</span> <span class="ptitle">${escapeHtml(titleText)}</span>`;
+        detPara.appendChild(sum);
+
+        // body with toolbar + verses
+        const body = document.createElement('div');
+        body.className = 'pbody';
+        body.innerHTML = `
+          <div class="ptoolbar">
+            <button class="primary speakBtn">낭독</button>
+            <label class="chip"><input type="checkbox" class="autoNext" style="margin-right:6px">다음 단락 낭독</label>
+            <button class="sermBtn">설교</button>
+          </div>
+          <div class="pcontent"></div>
+        `;
+        detPara.appendChild(body);
+
+        // fill verses into body
+        const pcontent = body.querySelector('.pcontent');
+        (p.verses||[]).forEach(([v,t])=>{
+          const line = document.createElement('div');
+          line.className = 'pline';
+          line.dataset.verse = v;
+          line.innerHTML = `<sup class="pv">${v}</sup>${t}`;
+          pcontent.appendChild(line);
+        });
+
+        // handlers
+        detPara.addEventListener('toggle', ()=>{
+          if(detPara.open){
+            selectParagraph(bookName, ch, idx); // 미러 표시
+          }
+        });
+        const speakBtn = body.querySelector('.speakBtn');
+        speakBtn.addEventListener('click', ()=>{
+          toggleSpeakInline(bookName, ch, idx, detPara, speakBtn);
+        });
+        const sermBtn = body.querySelector('.sermBtn');
+        sermBtn.addEventListener('click', ()=>{
+          // set current and open modal
+          CURRENT.book = bookName; CURRENT.chap = ch; CURRENT.paraIdx = idx;
+          const para = BIBLE.books[bookName][ch].paras[idx];
+          CURRENT.paraId = `${bookName}|${ch}|${para.ref}`;
+          openSermonModal();
+        });
+
+        parWrap.appendChild(detPara);
       });
 
       detChap.appendChild(parWrap);
@@ -301,7 +320,7 @@ function buildTree(){
   }
 }
 
-/* ===== Selection & Render ===== */
+/* ===== Selection & Right-pane mirror ===== */
 function selectParagraph(book, chap, idx){
   CURRENT.book = book;
   CURRENT.chap = chap;
@@ -312,109 +331,180 @@ function selectParagraph(book, chap, idx){
 
   paraTitleEl.textContent = `${para.title || para.ref}  (${para.ref})`;
 
-  // inline controls: 낭독 / 다음 단락 낭독 / 설교
-  paraToolbar.innerHTML = '';
-  const speakSmall = makeBtn('낭독', ()=>toggleSpeak(), {id:'speakSmall', className:'primary'});
-  const autoWrap = document.createElement('label');
-  autoWrap.className = 'chip';
-  autoWrap.innerHTML = `<input id="autoNext" type="checkbox" style="margin-right:6px">다음 단락 낭독`;
-  const sermSmall  = makeBtn('설교', ()=>openSermonModal(), {id:'sermSmall'});
-  paraToolbar.append(speakSmall, autoWrap, sermSmall);
-
-  // content
   contentEl.innerHTML = '';
-  para.verses.forEach(([v,t])=>{
+  (para.verses||[]).forEach(([v,t])=>{
     const line = document.createElement('div');
-    line.className = 'line';
+    line.className = 'pline';
     line.dataset.verse = v;
-    line.innerHTML = `<sup class="v">${v}</sup>${t}`;
+    line.innerHTML = `<sup class="pv">${v}</sup>${t}`;
     contentEl.appendChild(line);
   });
 
   status(`선택됨: ${book} ${chap}장 · ${para.title||para.ref}`);
 }
-function makeBtn(label, onclick, opts={}){
-  const b = document.createElement('button');
-  b.textContent = label;
-  b.onclick = onclick;
-  if(opts.id) b.id = opts.id;
-  if(opts.className) b.className = opts.className;
-  return b;
-}
 
-/* ===== Paragraph TTS ===== */
-function buildQueue(){
-  if(!BIBLE || CURRENT.paraIdx==null) return [];
-  const {book, chap, paraIdx} = CURRENT;
-  const para = BIBLE.books[book][chap].paras[paraIdx];
-  return para.verses.map(([v,t])=>({verse:v, text:t}));
+/* ===== Paragraph TTS (inline scope) ===== */
+function buildQueueFrom(book, chap, idx){
+  const para = BIBLE.books[book][chap].paras[idx];
+  return (para.verses||[]).map(([v,t])=>({verse:v, text:t}));
 }
-function clearReadingHighlight(){ [...contentEl.querySelectorAll('.line')].forEach(el=> el.classList.remove('reading')); }
-function speakVerseItem(item, onend){
+function clearReadingHighlight(scope){
+  [...scope.querySelectorAll('.pline')].forEach(el=> el.classList.remove('reading'));
+}
+function speakVerseItemInScope(item, scope, onend){
   if(!READER.synth) return;
   const u = new SpeechSynthesisUtterance(item.text);
   u.lang = 'ko-KR'; u.rate = 0.95; u.pitch = 1.0;
   u.onstart = ()=> {
-    clearReadingHighlight();
-    const line = contentEl.querySelector(`.line[data-verse="${item.verse}"]`);
+    clearReadingHighlight(scope);
+    const line = scope.querySelector(`.pline[data-verse="${item.verse}"]`);
     if(line){ line.classList.add('reading'); line.scrollIntoView({block:'center', behavior:'smooth'}); }
   };
   u.onend = onend;
   READER.synth.speak(u);
 }
-function toggleSpeak(){
+function toggleSpeakInline(book, chap, idx, paraDetailsEl, btnEl){
   if(!READER.synth) return alert('이 브라우저는 음성합성을 지원하지 않습니다.');
-  if(CURRENT.paraIdx==null) return;
-
-  if(READER.playing){ stopSpeak(); return; }
-  READER.q = buildQueue(); READER.idx = 0; READER.playing = true; updateSpeakButtons(); playNextInQueue();
+  // if already playing in this scope, stop. if playing elsewhere, stop and start here.
+  const sameScope = READER.playing && READER.scope === paraDetailsEl;
+  if(READER.playing && sameScope){ stopSpeakInline(); return; }
+  // (re)start here
+  READER.q = buildQueueFrom(book, chap, idx);
+  READER.idx = 0;
+  READER.playing = true;
+  READER.scope = paraDetailsEl;
+  READER.btn = btnEl;
+  updateInlineSpeakBtn();
+  playNextInQueueInline(book, chap, idx);
 }
-function playNextInQueue(){
+function playNextInQueueInline(book, chap, idx){
   if(!READER.playing) return;
   if(READER.idx >= READER.q.length){
-    const an = el('autoNext');
-    if(an && an.checked && goToNextParagraph()){ READER.q = buildQueue(); READER.idx = 0; playNextInQueue(); return; }
-    stopSpeak(); return;
+    const an = READER.scope.querySelector('.autoNext');
+    if(an && an.checked && goToNextParagraphInline(book, chap, idx)){
+      // CURRENT has been updated in goToNextParagraphInline
+      // reset q from CURRENT
+      READER.q = buildQueueFrom(CURRENT.book, CURRENT.chap, CURRENT.paraIdx);
+      READER.idx = 0;
+      playNextInQueueInline(CURRENT.book, CURRENT.chap, CURRENT.paraIdx);
+      return;
+    }
+    stopSpeakInline();
+    return;
   }
   const item = READER.q[READER.idx];
-  speakVerseItem(item, ()=>{ READER.idx++; playNextInQueue(); });
+  speakVerseItemInScope(item, READER.scope, ()=>{ READER.idx++; playNextInQueueInline(book, chap, idx); });
 }
-function stopSpeak(){
+function stopSpeakInline(){
   READER.playing = false;
   try{ READER.synth && READER.synth.cancel(); }catch(e){}
-  clearReadingHighlight();
-  updateSpeakButtons();
+  if(READER.scope) clearReadingHighlight(READER.scope);
+  updateInlineSpeakBtn();
+  READER.scope = null; READER.btn = null;
 }
-function updateSpeakButtons(){
-  const label = READER.playing ? '중지' : '낭독';
-  const small = el('speakSmall');
-  if(small) small.textContent = label;
+function updateInlineSpeakBtn(){
+  if(READER.btn) READER.btn.textContent = READER.playing ? '중지' : '낭독';
 }
-function goToNextParagraph(){
-  const {book, chap, paraIdx} = CURRENT;
+function goToNextParagraphInline(book, chap, idx){
+  // move to next para in tree and open it
   const chObj = BIBLE.books[book][chap];
-  if(paraIdx < chObj.paras.length-1){ selectParagraph(book, chap, paraIdx+1); return true; }
+  // find corresponding details element for current
+  // structure: books->chapters->paras; we can locate via DOM traversal
+  const booksEls = [...treeEl.children]; // details per book
+  const bIdx = Object.keys(BIBLE.books).indexOf(book);
+  const bookEl = booksEls[bIdx];
+  if(!bookEl) return false;
+  const chaptersEls = bookEl.querySelectorAll(':scope > .chapters > details');
   const chapNums = Object.keys(BIBLE.books[book]).map(n=>parseInt(n,10)).sort((a,b)=>a-b);
   const chPos = chapNums.indexOf(chap);
+  const chapEl = chaptersEls[chPos];
+  if(!chapEl) return false;
+
+  const paraEls = chapEl.querySelectorAll(':scope > .paras > details.para');
+
+  // next within chapter
+  if(idx < chObj.paras.length-1){
+    const nextEl = paraEls[idx+1];
+    if(nextEl){
+      chapEl.open = true;
+      nextEl.open = true;
+      selectParagraph(book, chap, idx+1);
+      READER.scope = nextEl;
+      READER.btn = nextEl.querySelector('.speakBtn');
+      CURRENT.book = book; CURRENT.chap = chap; CURRENT.paraIdx = idx+1;
+      return true;
+    }
+  }
+  // next chapter
   if(chPos >= 0 && chPos < chapNums.length-1){
     const nextChap = chapNums[chPos+1];
-    if((BIBLE.books[book][nextChap]?.paras||[]).length){ selectParagraph(book, nextChap, 0); return true; }
+    const nextChapEl = chaptersEls[chPos+1];
+    if(nextChapEl){
+      const nextParas = BIBLE.books[book][nextChap].paras||[];
+      if(nextParas.length){
+        const nextParaEl = nextChapEl.querySelector(':scope > .paras > details.para');
+        nextChapEl.open = true; if(nextParaEl) nextParaEl.open = true;
+        selectParagraph(book, nextChap, 0);
+        READER.scope = nextParaEl;
+        READER.btn = nextParaEl.querySelector('.speakBtn');
+        CURRENT.book = book; CURRENT.chap = nextChap; CURRENT.paraIdx = 0;
+        return true;
+      }
+    }
   }
-  const books = Object.keys(BIBLE.books);
-  const bPos = books.indexOf(book);
-  if(bPos >= 0 && bPos < books.length-1){
-    const nextBook = books[bPos+1];
-    const firstChap = Math.min(...Object.keys(BIBLE.books[nextBook]).map(n=>parseInt(n,10)));
-    if((BIBLE.books[nextBook][firstChap]?.paras||[]).length){ selectParagraph(nextBook, firstChap, 0); return true; }
+  // next book
+  const bookNames = Object.keys(BIBLE.books);
+  const bPos = bookNames.indexOf(book);
+  if(bPos >= 0 && bPos < bookNames.length-1){
+    const nextBook = bookNames[bPos+1];
+    const nextBookEl = booksEls[bPos+1];
+    if(nextBookEl){
+      const firstChap = Math.min(...Object.keys(BIBLE.books[nextBook]).map(n=>parseInt(n,10)));
+      const nextChapEl = nextBookEl.querySelector(':scope > .chapters > details');
+      const nextParaEl = nextChapEl?.querySelector(':scope > .paras > details.para');
+      if(nextParaEl){
+        nextBookEl.open = true; nextChapEl.open = true; nextParaEl.open = true;
+        selectParagraph(nextBook, firstChap, 0);
+        READER.scope = nextParaEl;
+        READER.btn = nextParaEl.querySelector('.speakBtn');
+        CURRENT.book = nextBook; CURRENT.chap = firstChap; CURRENT.paraIdx = 0;
+        return true;
+      }
+    }
   }
   return false;
 }
-/* shortcuts */
+
+/* keyboard shortcuts control inline current */
 window.addEventListener('keydown', (e)=>{
   if(e.target && ['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
-  if(e.key.toLowerCase()==='s'){ e.preventDefault(); toggleSpeak(); }
-  if(e.key.toLowerCase()==='n'){ e.preventDefault(); if(goToNextParagraph()) { if(READER.playing){ stopSpeak(); toggleSpeak(); } } }
+  if(e.key.toLowerCase()==='s'){ e.preventDefault();
+    // if there is a current open para, toggle there
+    const openPara = treeEl.querySelector('details.para[open] .speakBtn');
+    if(openPara){
+      const n = getCurrentIndicesFromOpen();
+      if(n) toggleSpeakInline(n.book, n.chap, n.idx, n.scope, openPara);
+    }
+  }
+  if(e.key.toLowerCase()==='n'){ e.preventDefault();
+    const n = getCurrentIndicesFromOpen();
+    if(n){
+      // simulate auto-next once
+      READER.playing = false; if(READER.synth) READER.synth.cancel();
+      goToNextParagraphInline(n.book, n.chap, n.idx);
+    }
+  }
 });
+function getCurrentIndicesFromOpen(){
+  // find first open para and map back to indices
+  const paraEl = treeEl.querySelector('details.para[open]');
+  if(!paraEl) return null;
+  // compute indices by traversing BIBLE using CURRENT if set, else DOM order
+  if(CURRENT.book && CURRENT.chap!=null && CURRENT.paraIdx!=null){
+    return { book: CURRENT.book, chap: CURRENT.chap, idx: CURRENT.paraIdx, scope: paraEl };
+  }
+  return null;
+}
 
 /* ===== Sermon CRUD + Modal ===== */
 function getSermonMap(){ try{ return JSON.parse(localStorage.getItem(STORAGE_SERMON)||'{}'); }catch(e){ return {}; } }
@@ -558,12 +648,7 @@ function stopEditorSpeak(silent){
   editorSpeakBtn.textContent = '낭독';
 }
 
-/* ===== Theme / Utils ===== */
-themeBtn.onclick = ()=>{
-  const light = document.body.dataset.theme === 'light';
-  document.body.dataset.theme = light ? '' : 'light';
-  themeName.textContent = light ? 'Dark' : 'Light';
-};
+/* ===== Utils ===== */
 function status(msg){ statusEl.textContent = msg; }
 function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
 </script>
