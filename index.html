@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Web Bible – Paragraph Sermon</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --panel: #161922;
+      --text: #e6e8ef;
+      --muted: #9aa0ab;
+      --accent: #6ea8fe;
+      --border: #252a36;
+    }
+    [data-theme="light"]{
+      --bg:#f7f8fc; --panel:#fff; --text:#0d1220; --muted:#5a6070; --accent:#2a5eea; --border:#e6e9f2;
+    }
+    * { box-sizing: border-box }
+    html, body { height: 100% }
+    body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", sans-serif; background: var(--bg); color: var(--text); display: grid; grid-template-rows: 56px 1fr; gap: 10px; }
+    header { display:flex; align-items:center; gap:12px; padding: 8px 12px; background: var(--panel); border-bottom: 1px solid var(--border); position: sticky; top:0; z-index: 5; }
+    header h1 { font-size: 16px; margin: 0; font-weight: 700; letter-spacing: .2px }
+    .pill { border:1px solid var(--border); background:color-mix(in hsl, var(--panel) 80%, black 10%); padding: 6px 8px; border-radius: 10px; display:flex; gap:6px; align-items:center; }
+    select, input[type="number"], input[type="text"], input[type="file"] { background:color-mix(in hsl, var(--panel) 70%, black 15%); color:var(--text); border:1px solid var(--border); border-radius:10px; padding:6px 8px; outline:none; appearance:none; }
+    button { background:color-mix(in hsl, var(--panel) 65%, black 10%); color:var(--text); border:1px solid var(--border); border-radius: 10px; padding: 6px 10px; cursor:pointer }
+    button:hover { border-color:color-mix(in hsl, var(--border) 80%, var(--accent) 20%) }
+    button.primary { background: linear-gradient(180deg,color-mix(in srgb, var(--accent) 75%, white 10%), color-mix(in srgb, var(--accent) 75%, black 20%)); border-color:color-mix(in srgb, var(--accent) 70%, black 10%) }
+    .layout { display:grid; grid-template-columns: 1fr 440px; gap: 10px; padding: 0 10px 12px }
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; display:flex; flex-direction:column }
+    .card .head { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-bottom:1px solid var(--border) }
+    .head .row { display:flex; gap:8px; align-items:center; flex-wrap: wrap }
+    .scroller { overflow:auto; padding: 12px; line-height: 1.9; }
+    .para { padding: 6px 8px; border-left: 3px solid transparent; border-radius: 8px; transition: background .15s, border-color .15s }
+    .para:hover { background:color-mix(in hsl, var(--panel) 80%, black 12%) }
+    .para.active { background:color-mix(in hsl, var(--panel) 82%, var(--accent) 8%); border-left-color: var(--accent) }
+    .v { color: var(--muted); font-size: .88em; vertical-align: super; margin-right: 4px }
+    .tools { display:flex; gap:6px; margin-top:6px }
+    .muted { color: var(--muted) }
+    .ghost { opacity:.6 }
+    .row-wrap { display:flex; flex-wrap: wrap; gap:8px; align-items:center }
+    .notes { white-space: pre-wrap; line-height:1.7 }
+    .note { padding:10px 12px; border:1px dashed var(--border); border-radius:10px; margin-bottom:10px; background:color-mix(in hsl, var(--panel) 80%, black 6%) }
+    .note .ref { font-size:.9em; color: var(--muted) }
+    .flex { display:flex; gap:8px; align-items:center }
+    .grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap:6px }
+    .kbd { border:1px solid var(--border); background:color-mix(in hsl, var(--panel) 70%, black 15%); border-radius:6px; padding: 2px 6px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size:.9em }
+    .footer { padding:8px 12px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap: wrap }
+    .small { font-size:.92em }
+    .grow { flex: 1 1 auto }
+    .searchbox { width: 220px }
+    .range { accent-color: var(--accent) }
+    .hl { background: color-mix(in hsl, var(--accent) 15%, white 0%); border:1px solid color-mix(in hsl, var(--accent) 40%, black 0%); border-radius: 8px; padding: 2px 6px }
+    .tag { font-size:.9em; color: color-mix(in srgb, var(--accent) 70%, white 15%) }
+    .chip {font-size:.9em; padding:4px 8px; border:1px solid var(--border); border-radius:999px; cursor:pointer}
+    .chip:hover{border-color:var(--accent)}
+    .hidden{display:none}
+    @media print{
+      header, #exportBar, .footer { display:none !important }
+      .layout { grid-template-columns: 1fr }
+      .note textarea { min-height: 0; height:auto }
+      body { background: #fff; color: #000 }
+      .card { border:none }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Web Bible – Paragraph Sermon <span class="tag">개역한글(데모) · 외부 JSON 지원</span></h1>
+
+    <div class="pill">
+      <label>권</label>
+      <select id="bookSel"></select>
+      <label>장</label>
+      <input id="chapInp" type="number" min="1" value="1" style="width:70px"/>
+      <button id="loadBtn">열기</button>
+    </div>
+
+    <div class="pill row-wrap">
+      <label>검색</label>
+      <input id="q" class="searchbox" type="text" placeholder="단어/구절"/>
+      <button id="findNext">다음</button>
+      <span class="muted small" id="findStat"></span>
+    </div>
+
+    <div class="pill row-wrap">
+      <label class="muted small">글자</label>
+      <input id="fontRange" class="range" type="range" min="15" max="26" value="18"/>
+      <label class="muted small">줄간</label>
+      <input id="lhRange" class="range" type="range" min="1.6" max="2.2" step=".05" value="1.9"/>
+      <label><input type="checkbox" id="showVerse" checked/> 절표시</label>
+      <label><input type="checkbox" id="sermonMode"/> 설교모드</label>
+      <button id="themeBtn" title="라이트/다크">테마</button>
+    </div>
+
+    <div class="pill">
+      <input id="fileInp" type="file" accept=".json" />
+      <button id="importBtn">JSON 불러오기</button>
+    </div>
+
+    <div class="grow"></div>
+    <div class="pill" id="exportBar">
+      <button id="exportBtn">내보내기 .txt</button>
+      <button id="exportMdBtn">Markdown</button>
+      <button id="printBtn">발표/인쇄</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <section class="card" id="bibleCard">
+      <div class="head">
+        <div class="row">
+          <strong id="title">—</strong>
+          <span class="muted" id="meta"></span>
+        </div>
+        <div class="row">
+          <button id="speakBtn">TTS 읽기</button>
+          <button id="pauseBtn">일시정지</button>
+          <button id="stopBtn">정지</button>
+        </div>
+      </div>
+      <div class="scroller" id="bibleView"></div>
+      <div class="footer small">
+        <div>
+          <span class="kbd">↑/↓</span> 문단 이동 · <span class="kbd">Enter</span> 선택 · <span class="kbd">Space</span> 자동스크롤 · <span class="kbd">Ctrl+F</span> 찾기
+        </div>
+        <div class="muted" id="status">—</div>
+      </div>
+    </section>
+
+    <aside class="card">
+      <div class="head">
+        <div class="row"><strong>설교 노트</strong><span class="muted" id="noteCount"></span></div>
+        <div class="row">
+          <button id="clearNotes">모두 지우기</button>
+          <button id="copyNotes">클립보드</button>
+        </div>
+      </div>
+      <div class="scroller" id="notes"></div>
+      <div class="footer small">
+        <div class="row-wrap" style="gap:6px">
+          <span class="muted">템플릿:</span>
+          <span class="chip" data-tpl="skeleton">서론/본론/결론</span>
+          <span class="chip" data-tpl="apply">적용(영·혼·육)</span>
+          <span class="chip" data-tpl="decision">결단/호소</span>
+          <span class="chip" data-tpl="hymn">찬송가(통일 1983)</span>
+          <span class="chip" data-tpl="prayer">마무리 기도문</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+<script>
+// 데이터(데모)
+const DEMO = { meta:{vers:"KRV",name:"개역한글",build:"demo-2025-10-03"}, books:{
+  "창세기":{ 1:{ title:"창세기 1장", paras:[
+    {ref:"1:1-5", verses:[[1,"태초에 하나님이 천지를 창조하시니라"],[2,"땅이 혼돈하고 공허하며 흑암이 깊음 위에 있고 하나님의 신은 수면에 운행하시니라"],[3,"하나님이 가라사대 빛이 있으라 하시매 빛이 있었고"],[4,"그 빛이 하나님의 보시기에 좋았더라 하나님이 빛과 어두움을 나누사"],[5,"빛을 낮이라 칭하시고 어두움을 밤이라 칭하시니라 저녁이 되며 아침이 되니 이는 첫째 날이니라"]]},
+    {ref:"1:26-28", verses:[[26,"하나님이 가라사대 우리의 형상을 따라 우리의 모양대로 우리가 사람을 만들고 그들로 바다의 고기와 공중의 새와 육축과 온 땅과 땅에 기는 모든 것을 다스리게 하자 하시고"],[27,"하나님이 자기 형상 곧 하나님의 형상대로 사람을 창조하시되 남자와 여자를 창조하시고"],[28,"하나님이 그들에게 복을 주시며 하나님이 그들에게 이르시되 생육하고 번성하여 땅에 충만하라 땅을 정복하라 바다의 고기와 공중의 새와 땅에 움직이는 모든 생물을 다스리라 하시니라"]]},
+    {ref:"1:31", verses:[[31,"하나님이 그 지으신 모든 것을 보시니 보시기에 심히 좋았더라 저녁이 되며 아침이 되니 이는 여섯째 날이니라"]]}
+  ]}},
+  "마태복음":{ 5:{ title:"마태복음 5장 (산상수훈)", paras:[
+    {ref:"5:3-6", verses:[[3,"심령이 가난한 자는 복이 있나니 천국이 저희 것임이요"],[4,"애통하는 자는 복이 있나니 저희가 위로를 받을 것임이요"],[5,"온유한 자는 복이 있나니 저희가 땅을 기업으로 받을 것임이요"],[6,"의에 주리고 목마른 자는 복이 있나니 저희가 배부를 것임이요"]]},
+    {ref:"5:13-16", verses:[[13,"너희는 세상의 소금이니..."],[14,"너희는 세상의 빛이라 산 위에 있는 동네가 숨기우지 못할 것이요"],[15,"사람이 등불을 켜서 말 아래 두지 아니하고 등경 위에 두나니..."],[16,"이같이 너희 빛이 사람 앞에 비치게 하여..."]]}
+  ]}}
+}};
+
+// 상태
+const el = id => document.getElementById(id);
+const bibleView = el('bibleView');
+const notesEl = el('notes');
+const statusEl = el('status');
+const titleEl = el('title');
+const metaEl = el('meta');
+const showVerse = el('showVerse');
+const sermonMode = el('sermonMode');
+const fontRange = el('fontRange');
+const lhRange = el('lhRange');
+const bookSel = el('bookSel');
+const chapInp = el('chapInp');
+const q = el('q');
+const findStat = el('findStat');
+const fileInp = el('fileInp');
+let current = { book: '창세기', chap: 1, idx: 0 };
+let autoScroll = false; let autoTimer = null; let findHits = []; let findPtr = -1;
+let synth = window.speechSynthesis || null;
+const NOTES_KEY = 'wbps.notes.v3';
+const STATE_KEY = 'wbps.state.v3';
+
+// 데이터 소스
+let DATA = structuredClone(DEMO);
+
+function populateBooks(){
+  bookSel.innerHTML = '';
+  for (const b of Object.keys(DATA.books)){
+    const o = document.createElement('option'); o.value=b; o.textContent=b; bookSel.appendChild(o);
+  }
+  if(!DATA.books[current.book]) current.book = Object.keys(DATA.books)[0];
+  bookSel.value = current.book;
+  metaEl.textContent = `${DATA.meta?.name||'-'} · ${DATA.meta?.vers||'-'} · ${DATA.meta?.build||''}`;
+}
+
+function buildParagraphHTML(para){
+  const show = showVerse.checked;
+  const chunks = para.verses.map(([n,t])=>`${show?`<sup class="v">${n}</sup>`:''}${t}`).join(' ');
+  return `<div class="para" data-ref="${para.ref}">${chunks}</div>`;
+}
+
+function loadChapter(){
+  const book = bookSel.value; let chap = parseInt(chapInp.value||'1',10);
+  const bk = DATA.books[book];
+  if(!bk || !bk[chap]){ status('해당 장 데이터가 없습니다.'); bibleView.innerHTML = ''; titleEl.textContent = '—'; return; }
+  const ch = bk[chap];
+  titleEl.textContent = `${book} ${chap}장`;
+  bibleView.innerHTML = ch.paras.map(p=>buildParagraphHTML(p)).join('');
+  current = {book, chap, idx:0};
+  bindParagraphEvents();
+  highlightIdx(0);
+  status(`${book} ${chap}장 문단 ${ch.paras.length}개`);
+  saveState();
+}
+
+function bindParagraphEvents(){
+  bibleView.querySelectorAll('.para').forEach((div, i)=>{
+    div.addEventListener('click', ()=>{ highlightIdx(i); if(sermonMode.checked) addNoteFromPara(i); });
+    div.addEventListener('dblclick', ()=> addNoteFromPara(i));
+    div.addEventListener('contextmenu', (e)=>{ e.preventDefault(); copyText(div.innerText.trim()); flash(div); status('복사됨: 문단 텍스트'); });
+  });
+}
+
+function highlightIdx(i){
+  const items = [...bibleView.querySelectorAll('.para')];
+  items.forEach(p=>p.classList.remove('active'));
+  const elp = items[i]; if(!elp) return;
+  elp.classList.add('active'); current.idx = i;
+  elp.scrollIntoView({block:'center', behavior:'smooth'});
+}
+
+function status(msg){ statusEl.textContent = msg; }
+function copyText(t){ navigator.clipboard?.writeText(t).catch(()=>{}); }
+
+// 노트
+function loadNotes(){ const raw = localStorage.getItem(NOTES_KEY); let arr = []; try{ arr = JSON.parse(raw)||[] }catch(e){} renderNotes(arr); }
+function saveNotes(){ const arr = [...notesEl.querySelectorAll('.note')].map(n=>({ref:n.dataset.ref, text:n.querySelector('textarea').value})); localStorage.setItem(NOTES_KEY, JSON.stringify(arr)); el('noteCount').textContent = `(${arr.length})`; }
+function renderNotes(arr){ notesEl.innerHTML=''; arr.forEach(({ref,text})=> addNote(ref,text)); el('noteCount').textContent = `(${arr.length})`; }
+function addNoteFromPara(i){ const p = DATA.books[current.book][current.chap].paras[i]; const plain = p.verses.map(([n,t])=>`${n}. ${t}`).join(' '); addNote(`${current.book} ${current.chap}:${p.ref}`, plain); saveNotes(); }
+function addNote(ref, text=''){
+  const wrap = document.createElement('div'); wrap.className='note'; wrap.dataset.ref=ref; wrap.draggable=true;
+  wrap.innerHTML = `<div class="flex" style="justify-content:space-between; gap:8px;">
+    <div class="ref">${ref}</div>
+    <div class="row-wrap">
+      <button class="mini copy">복사</button>
+      <button class="mini del">삭제</button>
+    </div>
+  </div>
+  <textarea style="width:100%; min-height:90px; background:color-mix(in hsl, var(--panel) 70%, black 15%); color:var(--text); border:1px solid var(--border); border-radius:10px; padding:8px; margin-top:6px">${escapeHtml(text)}</textarea>`;
+  notesEl.appendChild(wrap);
+  wrap.querySelector('.copy').onclick = ()=> copyText(`${ref}\n\n${wrap.querySelector('textarea').value}`);
+  wrap.querySelector('.del').onclick = ()=> { wrap.remove(); saveNotes(); };
+  wrap.querySelector('textarea').addEventListener('input', ()=> saveNotes());
+  wrap.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain','reorder'); wrap.classList.add('ghost'); });
+  wrap.addEventListener('dragend', ()=> wrap.classList.remove('ghost'));
+  notesEl.addEventListener('dragover', e=>{ e.preventDefault(); const after = getDragAfterElement(notesEl, e.clientY); if(after == null) notesEl.appendChild(wrap); else notesEl.insertBefore(wrap, after); });
+}
+function getDragAfterElement(container, y){ const els=[...container.querySelectorAll('.note:not(.ghost)')]; return els.reduce((closest,child)=>{ const box=child.getBoundingClientRect(); const offset=y-box.top-box.height/2; if(offset<0 && offset>closest.offset){ return {offset,element:child} } else { return closest } }, {offset:Number.NEGATIVE_INFINITY}).element; }
+
+el('clearNotes').onclick = ()=>{ if(confirm('노트를 모두 지울까요?')){ localStorage.removeItem(NOTES_KEY); loadNotes(); } };
+
+el('copyNotes').onclick = ()=>{ const txt = collectNotesAsText(); copyText(txt); status('설교 노트 전체가 클립보드로 복사되었습니다.'); };
+
+el('exportBtn').onclick = ()=>{ const blob = new Blob([collectNotesAsText()], {type:'text/plain;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`sermon-notes-${Date.now()}.txt`; a.click(); };
+
+el('exportMdBtn').onclick = ()=>{ const md = collectNotesAsMarkdown(); const blob = new Blob([md], {type:'text/markdown;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`sermon-notes-${Date.now()}.md`; a.click(); };
+
+function collectNotesAsText(){ return [...notesEl.querySelectorAll('.note')].map(n=>`[${n.querySelector('.ref').textContent}]\n${n.querySelector('textarea').value}`).join('\n\n'); }
+function collectNotesAsMarkdown(){ return [...notesEl.querySelectorAll('.note')].map(n=>`### ${n.querySelector('.ref').textContent}\n\n${n.querySelector('textarea').value}`).join('\n\n'); }
+function escapeHtml(s){ return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+// 검색
+function doFind(next=false){ const term=q.value.trim(); findStat.textContent=''; const items=[...bibleView.querySelectorAll('.para')]; items.forEach(p=> p.innerHTML=p.innerHTML.replaceAll('<mark class="hl">','').replaceAll('</mark>','')); if(!term){ findHits=[]; findPtr=-1; return } findHits=[]; items.forEach((p,i)=>{ const inner=p.innerHTML; if(inner.toLowerCase().includes(term.toLowerCase())){ p.innerHTML=inner.replace(new RegExp(term,'gi'), m=>`<mark class="hl">${m}</mark>`); findHits.push(i); } }); if(findHits.length){ findPtr = next ? (findPtr+1)%findHits.length : 0; highlightIdx(findHits[findPtr]); findStat.textContent = `${findPtr+1}/${findHits.length}`; } else { findPtr=-1; findStat.textContent='0/0'; } }
+q.addEventListener('keydown', e=>{ if(e.key==='Enter'){ doFind(true) } });
+el('findNext').onclick = ()=> doFind(true);
+
+// 스타일/옵션
+fontRange.oninput = ()=>{ bibleView.style.fontSize = fontRange.value + 'px'; saveState(); };
+lhRange.oninput = ()=>{ bibleView.style.lineHeight = lhRange.value; saveState(); };
+showVerse.onchange = ()=> loadChapter();
+sermonMode.onchange = ()=> sermonMode.checked ? status('설교 모드: 문단 클릭 시 우측에 추가됩니다.') : status('설교 모드 해제');
+el('themeBtn').onclick = ()=>{ document.body.dataset.theme = document.body.dataset.theme==='light'? '': 'light'; saveState(); };
+
+// 장 로드
+el('loadBtn').onclick = ()=> loadChapter();
+
+// 키보드
+window.addEventListener('keydown', e=>{
+  const items=[...bibleView.querySelectorAll('.para')];
+  if(['ArrowDown','ArrowUp','Enter',' '].includes(e.key)) e.preventDefault();
+  if(e.key==='ArrowDown'){ highlightIdx(Math.min(items.length-1, current.idx+1)); }
+  if(e.key==='ArrowUp'){ highlightIdx(Math.max(0, current.idx-1)); }
+  if(e.key==='Enter'){ if(sermonMode.checked) addNoteFromPara(current.idx); }
+  if(e.key===' '){ autoScroll = !autoScroll; if(autoScroll) startAutoScroll(); else stopAutoScroll(); }
+});
+
+function startAutoScroll(){ stopAutoScroll(); autoTimer=setInterval(()=>{ const items=[...bibleView.querySelectorAll('.para')]; if(current.idx < items.length-1){ highlightIdx(current.idx+1) } else { stopAutoScroll() } }, 4000); status('자동 스크롤 ON (4초 간격)'); }
+function stopAutoScroll(){ if(autoTimer){ clearInterval(autoTimer); autoTimer=null; status('자동 스크롤 OFF'); } }
+
+// TTS
+function paragraphText(i){ const p = DATA.books[current.book][current.chap].paras[i]; return p.verses.map(([n,t])=> (showVerse.checked?`${n}절 `:'') + t).join(' '); }
+
+el('speakBtn').onclick = ()=>{ if(!synth){ alert('이 브라우저는 음성합성을 지원하지 않습니다.'); return; } const u=new SpeechSynthesisUtterance(paragraphText(current.idx)); u.lang='ko-KR'; u.rate=0.95; u.pitch=1.0; u.onend=()=> status('TTS 완료'); synth.cancel(); synth.speak(u); };
+
+el('pauseBtn').onclick = ()=>{ if(synth){ synth.paused ? synth.resume() : synth.pause(); } };
+el('stopBtn').onclick = ()=> synth && synth.cancel();
+
+// 저장
+function saveState(){ const S = { font: fontRange.value, lh: lhRange.value, book: bookSel.value, chap: chapInp.value, show: showVerse.checked, theme: document.body.dataset.theme||'' }; localStorage.setItem(STATE_KEY, JSON.stringify(S)); }
+function restoreState(){ try{ const S = JSON.parse(localStorage.getItem(STATE_KEY)||'{}'); if(S.font) fontRange.value=S.font; if(S.lh) lhRange.value=S.lh; if(S.book) current.book=S.book; if(S.chap) chapInp.value=S.chap; if(typeof S.show==='boolean') showVerse.checked=S.show; if(S.theme) document.body.dataset.theme=S.theme; }catch(e){} bibleView.style.fontSize=fontRange.value+'px'; bibleView.style.lineHeight=lhRange.value; }
+
+// JSON 가져오기 (전체 성경 데이터 호환)
+// 기대 형식: { meta, books:{ [권]: { [장]: { title, paras:[ {ref, verses:[[절, "본문"]]} ] } } } }
+async function importFromFile(){ const f=fileInp.files?.[0]; if(!f){ alert('JSON 파일을 선택하세요'); return; } const text = await f.text(); try{ const json = JSON.parse(text); if(json && json.books){ DATA=json; populateBooks(); loadChapter(); status('JSON 성경 데이터가 로드되었습니다.'); } else { alert('형식이 맞지 않습니다.'); } } catch(err){ alert('JSON 파싱 오류: '+err.message); } }
+
+// 템플릿 빠른삽입
+const TPLS = {
+  skeleton: (title)=>`[제목] ${title||''}\n\nⅠ. 서론 — 상황·문제의식·갈망\n- 예화/상황:\n- 질문:\n- 오늘의 큰 아이디어:\n\nⅡ. 본론 — 진리의 전개(말씀 중심)\n1) 관찰(Observation):\n2) 해석(Interpretation):\n3) 적용(Application):\n\nⅢ. 결론 — 복음의 초대와 순종의 결단\n- 한 문장 결론:\n- 이번 주 실천 1–3:\n`,
+  apply: ()=>`[적용] 영·혼·육\n- 영(하나님과의 관계):\n- 혼(생각·감정·의지):\n- 육(습관·행동·시간/돈):\n- 공동체 적용(가정/교회/직장):\n`,
+  decision: ()=>`[결단/호소]\n주님, 제 삶의 주권을 주께 드립니다. (구체 결단 1–3)\n이번 주 체크포인트: (말/정신/몸)\n서약 기도: 주의 은혜로 순종하겠습니다. 아멘.\n`,
+  hymn: ()=>`[찬송가(통일 1983)]\n- 찬송: (번호/제목)\n- 선택 이유/핵심 가사:\n- 연결 성구:\n`,
+  prayer: ()=>`[마무리 기도문]\n자비로우신 주님, 오늘 주의 말씀을 마음에 새기게 하소서… 예수님의 이름으로 기도합니다. 아멘.\n`
+};
+
+document.querySelectorAll('.chip[data-tpl]').forEach(ch=>{
+  ch.addEventListener('click', ()=>{ const key=ch.dataset.tpl; const ref=`템플릿 · ${ch.textContent}`; const txt=(TPLS[key]||(()=>''))(titleEl.textContent); addNote(ref, txt); saveNotes(); notesEl.lastElementChild?.scrollIntoView({block:'end', behavior:'smooth'}); });
+});
+
+// 프린트/발표
+el('printBtn').onclick = ()=> window.print();
+
+// 초기화
+function restoreThenInit(){ restoreState(); populateBooks(); loadChapter(); loadNotes(); }
+restoreThenInit();
+
+// 이벤트 바인딩
+el('importBtn').onclick = importFromFile;
+
+// 헬퍼
+function flash(node){ node.animate([{background:'color-mix(in hsl, var(--accent) 20%, transparent)'},{background:'transparent'}],{duration:600, easing:'ease-out'}); }
+</script>
+</body>
+</html>
