@@ -14,7 +14,7 @@
       --border: #252a36;
       --good: #2ecc71;
       --danger: #ff6b6b;
-      --titleBlue: #7fb3ff; /* 밝은 파랑 */
+      --titleBlue: #7fb3ff; /* 단락 타이틀 밝은 파랑 */
     }
     [data-theme="light"]{
       --bg:#f7f8fc; --panel:#fff; --text:#0d1220; --muted:#5a6070; --accent:#2a5eea; --border:#e6e9f2; --good:#22bb66; --danger:#ff5b5b; --titleBlue:#2a5eea;
@@ -32,8 +32,6 @@
 
     .layout { display:grid; grid-template-columns: 340px 1fr; gap: 10px; padding: 0 10px 12px }
     .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; display:flex; flex-direction:column; min-width:0; }
-    .card .head { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-bottom:1px solid var(--border) }
-    .head .row { display:flex; gap:8px; align-items:center; flex-wrap: wrap }
     .scroller { overflow:auto; padding: 12px; }
 
     /* Sidebar tree */
@@ -42,32 +40,27 @@
     summary { cursor:pointer; list-style:none; display:flex; align-items:center; gap:8px; }
     summary::-webkit-details-marker { display:none; }
     .tw { font-weight:700 }
-    .meta { color: var(--muted); font-size:.92em }
     .chapters, .paras { display: grid; gap: 6px; margin-top:6px }
     .chip {font-size:.95em; padding:6px 10px; border:1px solid var(--border); border-radius:999px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; background: color-mix(in hsl, var(--panel) 88%, black 4%); }
     .chip:hover { border-color: var(--accent) }
     .ptitle { font-weight:800; color: var(--titleBlue); } /* 단락 타이틀: 진하게 밝은 파랑 */
 
     /* Content */
-    .title-wrap { display:flex; align-items:center; gap:10px; flex-wrap: wrap }
-    .title { font-size: 18px; font-weight: 800 }
-    .muted { color: var(--muted) }
     .para-title { font-weight:800; font-size: 16px; color: var(--titleBlue) }
-    .toolbar { display:flex; gap:8px; align-items:center; flex-wrap: wrap }
+    .toolbar { display:flex; gap:8px; align-items:center; flex-wrap: wrap; margin:8px 0 6px 0 }
     .content { line-height: 1.9; font-size: 18px }
     .v { color: var(--muted); font-size: .88em; vertical-align: super; margin-right: 4px }
     .line { padding: 4px 6px; border-left: 3px solid transparent; border-radius: 8px; transition: background .15s, border-color .15s }
     .line:hover { background:color-mix(in hsl, var(--panel) 80%, black 12%) }
     .line.reading { background: color-mix(in hsl, var(--accent) 15%, black 0%); border-left-color: var(--accent) }
 
-    .kbd { border:1px solid var(--border); background:color-mix(in hsl, var(--panel) 70%, black 15%); border-radius:6px; padding: 2px 6px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size:.9em }
     .footer { padding:8px 12px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap: wrap }
     .grow { flex:1 1 auto }
 
     /* Sermon modal */
     .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:50; }
     .modal { width:min(920px, 92vw); max-height: 90vh; overflow:auto; background:var(--panel); border:1px solid var(--border); border-radius:14px; }
-    .modal .head { position:sticky; top:0; background:var(--panel) }
+    .modal .head { position:sticky; top:0; background:var(--panel); padding:10px 12px; display:flex; gap:8px; align-items:center }
     .list { padding: 8px 12px; display:grid; gap:8px }
     .item { border:1px solid var(--border); border-radius:10px; padding:8px 10px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
     .item-title { font-weight:700 }
@@ -79,55 +72,28 @@
     .thumbs { display:flex; gap:8px; flex-wrap: wrap }
     .thumbs img { width:96px; height:96px; object-fit:cover; border-radius:10px; border:1px solid var(--border) }
 
-    @media (max-width: 920px) {
-      .layout { grid-template-columns: 1fr }
-    }
+    @media (max-width: 920px) { .layout { grid-template-columns: 1fr } }
   </style>
 </head>
 <body>
   <header>
-    <h1>Web Bible – Paragraph Sermon <span class="meta">토글 탐색 · TTS · 설교관리</span></h1>
-
-    <div class="pill">
-      <button id="themeBtn" title="라이트/다크">테마</button>
-    </div>
-
+    <h1>Web Bible – Paragraph Sermon</h1>
+    <div class="pill"><button id="themeBtn" title="라이트/다크">테마</button></div>
     <div class="grow"></div>
     <div class="pill"><span class="muted">단축키:</span> <span class="kbd">S</span> 재생/중지 <span class="kbd">N</span> 다음 단락</div>
   </header>
 
   <div class="layout">
-    <!-- LEFT: Tree -->
+    <!-- LEFT: Tree (no head bar) -->
     <aside class="card">
-      <div class="head">
-        <div class="row">
-          <strong>탐색</strong>
-          <span class="meta" id="metaSmall">—</span>
-        </div>
-        <div class="row">
-          <label class="chip"><input id="autoNext" type="checkbox" style="margin-right:6px">다음 단락 낭독</label>
-        </div>
-      </div>
-      <div id="tree" class="scroller">
-        <!-- dynamically built -->
-      </div>
+      <div id="tree" class="scroller"></div>
     </aside>
 
-    <!-- RIGHT: Content -->
+    <!-- RIGHT: Content (no head bar) -->
     <section class="card" id="contentCard">
-      <div class="head">
-        <div class="title-wrap">
-          <div class="title" id="contentTitle">성경을 선택하세요</div>
-          <span class="meta" id="contentMeta">—</span>
-        </div>
-        <div class="toolbar">
-          <button id="speakBtn" class="primary" disabled>낭독</button>
-          <button id="sermonBtn" disabled>설교</button>
-        </div>
-      </div>
       <div class="scroller">
-        <div class="para-title" id="paraTitle"></div>
-        <div id="paraToolbar" class="toolbar" style="margin:8px 0 6px 0"></div>
+        <div class="para-title" id="paraTitle">성경을 선택하세요</div>
+        <div id="paraToolbar" class="toolbar"></div>
         <div id="content" class="content"></div>
       </div>
       <div class="footer">
@@ -141,12 +107,10 @@
   <div id="modalWrap" class="modal-backdrop" aria-hidden="true">
     <div class="modal">
       <div class="head">
-        <div class="row" style="padding:10px 12px">
-          <strong>단락 설교</strong>
-          <span class="meta" id="modalRef">—</span>
-          <div class="grow"></div>
-          <button id="closeModal">닫기</button>
-        </div>
+        <strong>단락 설교</strong>
+        <span class="muted" id="modalRef">—</span>
+        <div class="grow"></div>
+        <button id="closeModal">닫기</button>
       </div>
       <div class="list" id="sermonList"></div>
       <div class="editor" id="sermonEditor" style="display:none">
@@ -174,13 +138,7 @@ const el = id => document.getElementById(id);
 const treeEl = el('tree');
 const contentEl = el('content');
 const paraTitleEl = el('paraTitle');
-const contentTitleEl = el('contentTitle');
-const contentMetaEl = el('contentMeta');
-const metaSmallEl = el('metaSmall');
 const statusEl = el('status');
-const speakBtn = el('speakBtn');
-const sermonBtn = el('sermonBtn');
-const autoNext = el('autoNext');
 const themeBtn = el('themeBtn');
 const themeName = el('themeName');
 const paraToolbar = el('paraToolbar');
@@ -195,14 +153,13 @@ const sermonBody = el('sermonBody');
 const sermonThumbs = el('sermonThumbs');
 const sermonImages = el('sermonImages');
 
-const STORAGE_SERMON = 'wbps.sermons.v2'; // per paragraph
+const STORAGE_SERMON = 'wbps.sermons.v3';
 let BIBLE = null;
 let CURRENT = { book:null, chap:null, paraIdx:null, paraId:null };
 let READER = { playing:false, q:[], idx:0, synth: window.speechSynthesis||null };
 
 /** =========================
  * Load Bible JSON automatically on start
- * Tries 'bible-paragraph.json' first, then fallback 'bible_paragraphs.json'
  * ========================= */
 (async function boot(){
   try{
@@ -211,8 +168,6 @@ let READER = { playing:false, q:[], idx:0, synth: window.speechSynthesis||null }
     try{ BIBLE = await tryFetchJSON('bible_paragraphs.json'); }
     catch(e){ status('bible-paragraph.json을 찾을 수 없습니다. 같은 폴더에 두고 다시 열어주세요.'); return; }
   }
-  metaSmallEl.textContent = `${BIBLE.meta?.name||'-'} · ${BIBLE.meta?.vers||'-'}`;
-  contentMetaEl.textContent = metaSmallEl.textContent;
   buildTree();
   status('불러오기 완료. 66권 트리가 활성화되었습니다.');
 })();
@@ -254,7 +209,7 @@ function buildTree(){
         const chip = document.createElement('div');
         chip.className = 'chip';
         chip.title = p.ref;
-        const titleText = p.title || p.ref; // 단락 번호 제거, 타이틀만
+        const titleText = p.title || p.ref;
         chip.innerHTML = `<span class="ptitle">${escapeHtml(titleText)}</span>`;
         chip.addEventListener('click', ()=> selectParagraph(bookName, ch, idx));
         parWrap.appendChild(chip);
@@ -280,20 +235,16 @@ function selectParagraph(book, chap, idx){
   const para = chapObj.paras[idx];
   CURRENT.paraId = `${book}|${chap}|${para.ref}`;
 
-  contentTitleEl.textContent = `${book} ${chap}장`;
   paraTitleEl.textContent = `${para.title || para.ref}  (${para.ref})`;
 
-  // Paragraph toolbar (inline)
+  // Paragraph toolbar (inline) — 낭독/설교 + 다음 단락 낭독 체크
   paraToolbar.innerHTML = '';
   const speakSmall = makeBtn('낭독', ()=>toggleSpeak(), {id:'speakSmall', className:'primary'});
+  const autoWrap = document.createElement('label');
+  autoWrap.className = 'chip';
+  autoWrap.innerHTML = `<input id="autoNext" type="checkbox" style="margin-right:6px">다음 단락 낭독`;
   const sermSmall  = makeBtn('설교', ()=>openSermonModal(), {id:'sermSmall'});
-  paraToolbar.append(speakSmall, sermSmall);
-
-  // Main toolbar
-  speakBtn.disabled = false;
-  sermonBtn.disabled = false;
-  speakBtn.onclick = ()=> toggleSpeak();
-  sermonBtn.onclick = ()=> openSermonModal();
+  paraToolbar.append(speakSmall, autoWrap, sermSmall);
 
   // Content
   contentEl.innerHTML = '';
@@ -318,7 +269,7 @@ function makeBtn(label, onclick, opts={}){
 }
 
 /** =========================
- * Reading (TTS) — verse by verse with highlight
+ * Reading (TTS)
  * ========================= */
 function buildQueue(){
   if(!BIBLE || CURRENT.paraIdx==null) return [];
@@ -353,7 +304,6 @@ function toggleSpeak(){
     stopSpeak();
     return;
   }
-  // start
   READER.q = buildQueue();
   READER.idx = 0;
   READER.playing = true;
@@ -364,8 +314,8 @@ function toggleSpeak(){
 function playNextInQueue(){
   if(!READER.playing) return;
   if(READER.idx >= READER.q.length){
-    // end of paragraph
-    if(autoNext.checked){
+    const autoNext = el('autoNext');
+    if(autoNext && autoNext.checked){
       if(goToNextParagraph()){
         READER.q = buildQueue();
         READER.idx = 0;
@@ -389,8 +339,8 @@ function stopSpeak(){
 
 function updateSpeakButtons(){
   const label = READER.playing ? '중지' : '낭독';
-  const main = speakBtn; const small = el('speakSmall');
-  [main, small].forEach(b=> { if(!b) return; b.textContent = label; });
+  const small = el('speakSmall');
+  if(small) small.textContent = label;
 }
 
 function goToNextParagraph(){
@@ -400,7 +350,6 @@ function goToNextParagraph(){
     selectParagraph(book, chap, paraIdx+1);
     return true;
   }
-  // next chapter
   const chapNums = Object.keys(BIBLE.books[book]).map(n=>parseInt(n,10)).sort((a,b)=>a-b);
   const chPos = chapNums.indexOf(chap);
   if(chPos >= 0 && chPos < chapNums.length-1){
@@ -410,7 +359,6 @@ function goToNextParagraph(){
       return true;
     }
   }
-  // next book
   const books = Object.keys(BIBLE.books);
   const bPos = books.indexOf(book);
   if(bPos >= 0 && bPos < books.length-1){
@@ -535,7 +483,7 @@ el('saveSermon').onclick = ()=> {
       arr[idx].title = title;
       arr[idx].body = body;
       arr[idx].images = imgs;
-      arr[idx].date = date; // update last edited
+      arr[idx].date = date; // last edited
     }
   } else {
     arr.unshift({ id: crypto.randomUUID(), title, body, images: imgs, date });
