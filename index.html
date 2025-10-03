@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Web Bible – Paragraph Sermon</title>
+  <title>Web Bible – Paragraph Sermon (Left-only)</title>
   <style>
     :root {
       --bg: #0f1115;
@@ -16,7 +16,6 @@
       --danger: #ff6b6b;
       --titleBlue: #7fb3ff;
       --sidebar: 340px;
-      --gutter: 6px;
     }
     * { box-sizing: border-box }
     html, body { height: 100% }
@@ -35,34 +34,15 @@
     .primary { background: linear-gradient(180deg,color-mix(in srgb, var(--accent) 75%, white 10%), color-mix(in srgb, var(--accent) 75%, black 20%)); border-color:color-mix(in srgb, var(--accent) 70%, black 10%) }
     .danger { border-color:var(--danger); }
 
-    .layout {
-      display:grid;
-      grid-template-columns: var(--sidebar) var(--gutter) 1fr;
-      gap: 10px; padding: 0 10px 12px;
-      align-items: stretch;
-    }
+    /* SINGLE COLUMN LAYOUT (LEFT ONLY) */
+    .layout { display:grid; grid-template-columns: 1fr; gap: 10px; padding: 0 10px 12px }
     .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; display:flex; flex-direction:column; min-width:0; }
     .scroller { overflow:auto; padding: 12px; }
     .footer { padding:8px 12px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap: wrap }
-    .grow { flex:1 1 auto }
     .muted { color: var(--muted) }
+    .grow { flex:1 1 auto }
 
-    /* 리사이저 */
-    #resizer {
-      background: color-mix(in hsl, var(--panel) 70%, black 10%);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      cursor: col-resize;
-      position: relative;
-    }
-    #resizer::after {
-      content:''; position:absolute; top:50%; left:50%; transform: translate(-50%,-50%);
-      width: 2px; height: 28px; background: color-mix(in hsl, var(--muted) 70%, transparent);
-      border-radius: 2px;
-    }
-    #resizer.dragging { background: color-mix(in hsl, var(--accent) 35%, var(--panel) 65%); }
-
-    /* Sidebar tree */
+    /* Sidebar tree (now main UI) */
     #tree { padding: 8px; }
     details { border:1px solid var(--border); border-radius:10px; padding: 6px 8px; margin-bottom: 8px; background:color-mix(in hsl, var(--panel) 80%, black 8%); }
     summary { cursor:pointer; list-style:none; display:flex; align-items:center; gap:8px; }
@@ -70,12 +50,13 @@
     .tw { font-weight:700 }
     .chapters { display: grid; gap: 6px; margin-top:6px }
     .paras { display: grid; gap: 6px; margin: 8px 0 2px 0 }
+
     .chip {font-size:.92em; padding:6px 10px; border:1px solid var(--border); border-radius:999px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; background: color-mix(in hsl, var(--panel) 88%, black 4%); white-space: nowrap;}
     .chip:hover { border-color: var(--accent) }
     .ptitle { font-weight:800; color: var(--titleBlue); }
     .vrange { color: var(--muted); font-weight:700 }
 
-    /* 단락 토글 내부 UI */
+    /* Paragraph toggle body */
     .pbody { margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 8px; }
     .ptoolbar { display:flex; gap:8px; align-items:center; flex-wrap: wrap; margin-bottom: 8px }
     .pline { padding: 4px 6px; border-left: 3px solid transparent; border-radius: 8px; transition: background .15s, border-color .15s }
@@ -83,13 +64,7 @@
     .pline.reading { background: color-mix(in hsl, var(--accent) 15%, black 0%); border-left-color: var(--accent) }
     .pv { color: var(--muted); font-size: .88em; vertical-align: super; margin-right: 4px }
 
-    /* Right content */
-    .para-title { font-weight:800; font-size: 16px; color: var(--titleBlue) }
-    .content { line-height: 1.9; font-size: 18px }
-
-    @media (max-width: 920px) {
-      .layout { grid-template-columns: 1fr var(--gutter) 1fr } /* 모바일 반반 */
-    }
+    @media (max-width: 920px) { .layout { grid-template-columns: 1fr } }
   </style>
 </head>
 <body>
@@ -99,22 +74,11 @@
     <div class="pill"><span class="muted">단축키:</span> <span class="kbd">S</span> 재생/중지 <span class="kbd">N</span> 다음 단락</div>
   </header>
 
-  <div class="layout" id="layoutRoot">
-    <!-- LEFT: Tree (단락 토글 안에 버튼+시작/끝절+내용 포함) -->
-    <aside class="card" id="leftPane">
+  <div class="layout">
+    <!-- LEFT ONLY: Books → Chapters → Paragraphs (toggle with toolbar + verses inside) -->
+    <section class="card">
       <div class="scroller">
         <div id="tree"></div>
-      </div>
-    </aside>
-
-    <!-- RESIZER -->
-    <div id="resizer" title="경계 드래그로 크기 조절"></div>
-
-    <!-- RIGHT: Content (선택 미러) -->
-    <section class="card" id="contentPane">
-      <div class="scroller">
-        <div class="para-title" id="paraTitle">성경을 선택하세요</div>
-        <div id="content" class="content"></div>
       </div>
       <div class="footer">
         <div class="muted" id="status">bible-paragraph.json을 불러오는 중…</div>
@@ -154,8 +118,6 @@
 /* ===== State ===== */
 const el = id => document.getElementById(id);
 const treeEl = el('tree');
-const contentEl = el('content');
-const paraTitleEl = el('paraTitle');
 const statusEl = el('status');
 
 const modalWrap = el('modalWrap');
@@ -168,20 +130,14 @@ const sermonThumbs = el('sermonThumbs');
 const sermonImages = el('sermonImages');
 const editorSpeakBtn = el('editorSpeak');
 
-const SIDEBAR_KEY = 'wbps.sidebar.px';
 const STORAGE_SERMON = 'wbps.sermons.v4';
 
 let BIBLE = null;
 let CURRENT = { book:null, chap:null, paraIdx:null, paraId:null };
-let READER = { playing:false, q:[], idx:0, synth: window.speechSynthesis||null, scope:null, btn:null };// scope: paragraph container
-
+let READER = { playing:false, q:[], idx:0, synth: window.speechSynthesis||null, scope:null, btn:null };
 let EDITOR_READER = { playing:false, u:null, synth: window.speechSynthesis||null };
 
-/* ===== Boot (auto-load bible JSON) + restore sidebar width ===== */
-(function restoreSidebar(){
-  const saved = +localStorage.getItem(SIDEBAR_KEY);
-  if(saved && saved > 80) document.documentElement.style.setProperty('--sidebar', saved+'px');
-})();
+/* ===== Boot (auto-load bible JSON) ===== */
 (async function boot(){
   try{
     BIBLE = await tryFetchJSON('bible-paragraph.json');
@@ -197,38 +153,6 @@ async function tryFetchJSON(path){
   if(!res.ok) throw new Error('fetch failed');
   return await res.json();
 }
-
-/* ===== Draggable Resizer ===== */
-(function setupResizer(){
-  const layout = document.getElementById('layoutRoot');
-  const resizer = document.getElementById('resizer');
-  let dragging = false;
-
-  const onDown = (e)=>{ dragging = true; resizer.classList.add('dragging'); document.body.style.cursor='col-resize'; e.preventDefault(); };
-  const onMove = (e)=>{
-    if(!dragging) return;
-    const cx = (e.touches?.[0]?.clientX ?? e.clientX);
-    const rect = layout.getBoundingClientRect();
-    let w = cx - rect.left;
-    const min = 110;
-    const max = Math.min(rect.width * 0.6, rect.width - 220);
-    w = Math.max(min, Math.min(max, w));
-    document.documentElement.style.setProperty('--sidebar', w + 'px');
-  };
-  const onUp = ()=>{
-    if(!dragging) return;
-    dragging = false; resizer.classList.remove('dragging'); document.body.style.cursor='';
-    const cur = getComputedStyle(document.documentElement).getPropertyValue('--sidebar').trim();
-    const px = parseInt(cur,10); if(px>0) localStorage.setItem(SIDEBAR_KEY, String(px));
-  };
-
-  resizer.addEventListener('mousedown', onDown);
-  resizer.addEventListener('touchstart', onDown, {passive:false});
-  window.addEventListener('mousemove', onMove);
-  window.addEventListener('touchmove', onMove, {passive:false});
-  window.addEventListener('mouseup', onUp);
-  window.addEventListener('touchend', onUp);
-})();
 
 /* ===== Tree (Books → Chapters → Paragraphs with inline content) ===== */
 function buildTree(){
@@ -293,16 +217,18 @@ function buildTree(){
         // handlers
         detPara.addEventListener('toggle', ()=>{
           if(detPara.open){
-            selectParagraph(bookName, ch, idx); // 미러 표시
+            // set CURRENT and status when opened
+            CURRENT.book = bookName; CURRENT.chap = ch; CURRENT.paraIdx = idx;
+            const para = BIBLE.books[bookName][ch].paras[idx];
+            CURRENT.paraId = `${bookName}|${ch}|${para.ref}`;
+            status(`선택됨: ${bookName} ${ch}장 · ${para.title||para.ref}`);
           }
         });
-        const speakBtn = body.querySelector('.speakBtn');
-        speakBtn.addEventListener('click', ()=>{
-          toggleSpeakInline(bookName, ch, idx, detPara, speakBtn);
+
+        body.querySelector('.speakBtn').addEventListener('click', ()=>{
+          toggleSpeakInline(bookName, ch, idx, detPara, body.querySelector('.speakBtn'));
         });
-        const sermBtn = body.querySelector('.sermBtn');
-        sermBtn.addEventListener('click', ()=>{
-          // set current and open modal
+        body.querySelector('.sermBtn').addEventListener('click', ()=>{
           CURRENT.book = bookName; CURRENT.chap = ch; CURRENT.paraIdx = idx;
           const para = BIBLE.books[bookName][ch].paras[idx];
           CURRENT.paraId = `${bookName}|${ch}|${para.ref}`;
@@ -318,29 +244,6 @@ function buildTree(){
     detBook.appendChild(chWrap);
     treeEl.appendChild(detBook);
   }
-}
-
-/* ===== Selection & Right-pane mirror ===== */
-function selectParagraph(book, chap, idx){
-  CURRENT.book = book;
-  CURRENT.chap = chap;
-  CURRENT.paraIdx = idx;
-
-  const para = BIBLE.books[book][chap].paras[idx];
-  CURRENT.paraId = `${book}|${chap}|${para.ref}`;
-
-  paraTitleEl.textContent = `${para.title || para.ref}  (${para.ref})`;
-
-  contentEl.innerHTML = '';
-  (para.verses||[]).forEach(([v,t])=>{
-    const line = document.createElement('div');
-    line.className = 'pline';
-    line.dataset.verse = v;
-    line.innerHTML = `<sup class="pv">${v}</sup>${t}`;
-    contentEl.appendChild(line);
-  });
-
-  status(`선택됨: ${book} ${chap}장 · ${para.title||para.ref}`);
 }
 
 /* ===== Paragraph TTS (inline scope) ===== */
@@ -365,10 +268,9 @@ function speakVerseItemInScope(item, scope, onend){
 }
 function toggleSpeakInline(book, chap, idx, paraDetailsEl, btnEl){
   if(!READER.synth) return alert('이 브라우저는 음성합성을 지원하지 않습니다.');
-  // if already playing in this scope, stop. if playing elsewhere, stop and start here.
   const sameScope = READER.playing && READER.scope === paraDetailsEl;
   if(READER.playing && sameScope){ stopSpeakInline(); return; }
-  // (re)start here
+
   READER.q = buildQueueFrom(book, chap, idx);
   READER.idx = 0;
   READER.playing = true;
@@ -382,8 +284,6 @@ function playNextInQueueInline(book, chap, idx){
   if(READER.idx >= READER.q.length){
     const an = READER.scope.querySelector('.autoNext');
     if(an && an.checked && goToNextParagraphInline(book, chap, idx)){
-      // CURRENT has been updated in goToNextParagraphInline
-      // reset q from CURRENT
       READER.q = buildQueueFrom(CURRENT.book, CURRENT.chap, CURRENT.paraIdx);
       READER.idx = 0;
       playNextInQueueInline(CURRENT.book, CURRENT.chap, CURRENT.paraIdx);
@@ -406,14 +306,13 @@ function updateInlineSpeakBtn(){
   if(READER.btn) READER.btn.textContent = READER.playing ? '중지' : '낭독';
 }
 function goToNextParagraphInline(book, chap, idx){
-  // move to next para in tree and open it
   const chObj = BIBLE.books[book][chap];
-  // find corresponding details element for current
-  // structure: books->chapters->paras; we can locate via DOM traversal
+
   const booksEls = [...treeEl.children]; // details per book
   const bIdx = Object.keys(BIBLE.books).indexOf(book);
   const bookEl = booksEls[bIdx];
   if(!bookEl) return false;
+
   const chaptersEls = bookEl.querySelectorAll(':scope > .chapters > details');
   const chapNums = Object.keys(BIBLE.books[book]).map(n=>parseInt(n,10)).sort((a,b)=>a-b);
   const chPos = chapNums.indexOf(chap);
@@ -428,10 +327,9 @@ function goToNextParagraphInline(book, chap, idx){
     if(nextEl){
       chapEl.open = true;
       nextEl.open = true;
-      selectParagraph(book, chap, idx+1);
+      CURRENT.book = book; CURRENT.chap = chap; CURRENT.paraIdx = idx+1;
       READER.scope = nextEl;
       READER.btn = nextEl.querySelector('.speakBtn');
-      CURRENT.book = book; CURRENT.chap = chap; CURRENT.paraIdx = idx+1;
       return true;
     }
   }
@@ -444,10 +342,9 @@ function goToNextParagraphInline(book, chap, idx){
       if(nextParas.length){
         const nextParaEl = nextChapEl.querySelector(':scope > .paras > details.para');
         nextChapEl.open = true; if(nextParaEl) nextParaEl.open = true;
-        selectParagraph(book, nextChap, 0);
-        READER.scope = nextParaEl;
-        READER.btn = nextParaEl.querySelector('.speakBtn');
         CURRENT.book = book; CURRENT.chap = nextChap; CURRENT.paraIdx = 0;
+        READER.scope = nextParaEl;
+        READER.btn = nextParaEl?.querySelector('.speakBtn') || null;
         return true;
       }
     }
@@ -464,10 +361,9 @@ function goToNextParagraphInline(book, chap, idx){
       const nextParaEl = nextChapEl?.querySelector(':scope > .paras > details.para');
       if(nextParaEl){
         nextBookEl.open = true; nextChapEl.open = true; nextParaEl.open = true;
-        selectParagraph(nextBook, firstChap, 0);
+        CURRENT.book = nextBook; CURRENT.chap = firstChap; CURRENT.paraIdx = 0;
         READER.scope = nextParaEl;
         READER.btn = nextParaEl.querySelector('.speakBtn');
-        CURRENT.book = nextBook; CURRENT.chap = firstChap; CURRENT.paraIdx = 0;
         return true;
       }
     }
@@ -475,43 +371,39 @@ function goToNextParagraphInline(book, chap, idx){
   return false;
 }
 
-/* keyboard shortcuts control inline current */
+/* keyboard shortcuts operate on currently open paragraph (inline) */
 window.addEventListener('keydown', (e)=>{
   if(e.target && ['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
   if(e.key.toLowerCase()==='s'){ e.preventDefault();
-    // if there is a current open para, toggle there
-    const openPara = treeEl.querySelector('details.para[open] .speakBtn');
+    const openPara = treeEl.querySelector('details.para[open]');
     if(openPara){
-      const n = getCurrentIndicesFromOpen();
-      if(n) toggleSpeakInline(n.book, n.chap, n.idx, n.scope, openPara);
+      // find CURRENT already set by toggle listener
+      const btn = openPara.querySelector('.speakBtn');
+      if(CURRENT.book!=null) toggleSpeakInline(CURRENT.book, CURRENT.chap, CURRENT.paraIdx, openPara, btn);
     }
   }
   if(e.key.toLowerCase()==='n'){ e.preventDefault();
-    const n = getCurrentIndicesFromOpen();
-    if(n){
-      // simulate auto-next once
+    if(CURRENT.book!=null){
       READER.playing = false; if(READER.synth) READER.synth.cancel();
-      goToNextParagraphInline(n.book, n.chap, n.idx);
+      goToNextParagraphInline(CURRENT.book, CURRENT.chap, CURRENT.paraIdx);
     }
   }
 });
-function getCurrentIndicesFromOpen(){
-  // find first open para and map back to indices
-  const paraEl = treeEl.querySelector('details.para[open]');
-  if(!paraEl) return null;
-  // compute indices by traversing BIBLE using CURRENT if set, else DOM order
-  if(CURRENT.book && CURRENT.chap!=null && CURRENT.paraIdx!=null){
-    return { book: CURRENT.book, chap: CURRENT.chap, idx: CURRENT.paraIdx, scope: paraEl };
-  }
-  return null;
-}
 
 /* ===== Sermon CRUD + Modal ===== */
 function getSermonMap(){ try{ return JSON.parse(localStorage.getItem(STORAGE_SERMON)||'{}'); }catch(e){ return {}; } }
 function setSermonMap(o){ localStorage.setItem(STORAGE_SERMON, JSON.stringify(o)); }
 
 function openSermonModal(){
-  if(!CURRENT.paraId) return;
+  if(!CURRENT.paraId){
+    // if none selected, try pick first open paragraph
+    const openPara = treeEl.querySelector('details.para[open]');
+    if(openPara && CURRENT.book==null){
+      // no-op; still require CURRENT set when opened by toggle
+      return;
+    }
+    if(!openPara) return;
+  }
   const para = BIBLE.books[CURRENT.book][CURRENT.chap].paras[CURRENT.paraIdx];
   modalRef.textContent = `${CURRENT.book} ${CURRENT.chap}장 · ${para.title||para.ref} (${para.ref})`;
   renderSermonList();
