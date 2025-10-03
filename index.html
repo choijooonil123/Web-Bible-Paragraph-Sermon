@@ -65,7 +65,7 @@
       --editorBg: #f4f6ff;  /* 아주 옅은 파랑/보라톤 */
       --editorText: #1c2333;
     }
-    .modal { background: var(--panel); } /* 그대로 두기 */
+    .modal { background: var(--panel); }
     .editor{
       background: var(--editorBg);
       color: var(--editorText);
@@ -86,7 +86,7 @@
   <header>
     <h1>Web Bible – Paragraph Sermon</h1>
 
-    <!-- 한국어 보이스 / 프리셋 (이전 버전과 동일) -->
+    <!-- 한국어 보이스 / 프리셋 -->
     <div class="pill">
       <span class="muted">음성</span>
       <select id="voiceSelect" title="한국어 보이스 선택">
@@ -122,7 +122,7 @@
     </section>
   </div>
 
-  <!-- Sermon Modal (동일) -->
+  <!-- Sermon Modal -->
   <div id="modalWrap" class="modal-backdrop" aria-hidden="true">
     <div class="modal">
       <div class="head">
@@ -193,7 +193,7 @@
     })();
     async function tryFetchJSON(path){ const res = await fetch(path, {cache:'no-store'}); if(!res.ok) throw 0; return await res.json(); }
 
-    /* ====== Voice (이전과 동일) ====== */
+    /* ====== Voice ====== */
     function waitForVoices(timeout=1500){
       return new Promise(resolve=>{
         const have = speechSynthesis.getVoices?.();
@@ -234,7 +234,7 @@
         kos.forEach(v=>{
           const opt = document.createElement('option');
           opt.value = JSON.stringify({type:'voice', uri:v.voiceURI});
-          opt.textContent = ${v.name} — ${v.lang}${v.localService ? ' (로컬)' : ''};
+          opt.textContent = `${v.name} — ${v.lang}${v.localService ? ' (로컬)' : ''}`;
           og.appendChild(opt);
         });
         voiceSelect.appendChild(og);
@@ -296,12 +296,12 @@
     /* ====== Tree (books → chapters → paragraphs with inline content) ====== */
     function buildTree(){
       treeEl.innerHTML = '';
-      if(!BIBLE){ treeEl.innerHTML = <div class="muted">파일을 찾을 수 없습니다.</div>; return; }
+      if(!BIBLE){ treeEl.innerHTML = '<div class="muted">파일을 찾을 수 없습니다.</div>'; return; }
 
       for(const bookName of Object.keys(BIBLE.books)){
         const detBook = document.createElement('details');
         const sumBook = document.createElement('summary');
-        sumBook.innerHTML = <span class="tw">${bookName}</span>;
+        sumBook.innerHTML = `<span class="tw">${escapeHtml(bookName)}</span>`;
         detBook.appendChild(sumBook);
 
         const chWrap = document.createElement('div'); chWrap.className='chapters';
@@ -310,7 +310,7 @@
         for(const ch of chapters){
           const detChap = document.createElement('details');
           const sumChap = document.createElement('summary');
-          sumChap.innerHTML = <span class="chip">${ch}장</span>;
+          sumChap.innerHTML = `<span class="chip">${ch}장</span>`;
           detChap.appendChild(sumChap);
 
           const parWrap = document.createElement('div'); parWrap.className='paras';
@@ -318,27 +318,27 @@
           paras.forEach((p, idx)=>{
             const detPara = document.createElement('details'); detPara.className='para';
 
-            // (start-end) from p.ref like "1:1-5"
             const m = String(p.ref||'').match(/^(\d+):(\d+)(?:-(\d+))?$/);
             const v1 = m ? m[2] : '?', v2 = m ? (m[3]||m[2]) : '?';
             const titleText = p.title || p.ref;
 
             const sum = document.createElement('summary');
-            sum.innerHTML = <span class="vrange">(${v1}-${v2})</span> <span class="ptitle">${escapeHtml(titleText)}</span>;
+            sum.innerHTML = `<span class="vrange">(${v1}-${v2})</span> <span class="ptitle">${escapeHtml(titleText)}</span>`;
             detPara.appendChild(sum);
 
             const body = document.createElement('div');
             body.className = 'pbody';
-            body.innerHTML = <div class="ptoolbar">
-              <button class="primary speakBtn">낭독</button>
-              <label class="chip"><input type="checkbox" class="keepReading" style="margin-right:6px">계속 낭독</label>
-              <button class="ctxBtn btnUnitCtx">단위성경속 맥락</button>
-              <button class="ctxBtn btnWholeCtx">전체성경속 맥락</button>
-              <button class="ctxBtn btnCommentary">주석</button>
-              <div class="spacer"></div>
-              <button class="sermBtn">설교</button>
-            </div>
-            <div class="pcontent"></div> ;
+            body.innerHTML = `
+              <div class="ptoolbar">
+                <button class="primary speakBtn">낭독</button>
+                <label class="chip"><input type="checkbox" class="keepReading" style="margin-right:6px">계속 낭독</label>
+                <button class="ctxBtn btnUnitCtx">단위성경속 맥락</button>
+                <button class="ctxBtn btnWholeCtx">전체성경속 맥락</button>
+                <button class="ctxBtn btnCommentary">주석</button>
+                <div class="spacer"></div>
+                <button class="sermBtn">설교</button>
+              </div>
+              <div class="pcontent"></div>`;
             detPara.appendChild(body);
 
             const pcontent = body.querySelector('.pcontent');
@@ -346,7 +346,7 @@
               const line = document.createElement('div');
               line.className = 'pline';
               line.dataset.verse = v;
-              line.innerHTML = <sup class="pv">${v}</sup>${t};
+              line.innerHTML = `<sup class="pv">${v}</sup>${t}`;
               pcontent.appendChild(line);
             });
 
@@ -354,8 +354,8 @@
               if(detPara.open){
                 CURRENT.book = bookName; CURRENT.chap = ch; CURRENT.paraIdx = idx;
                 const para = BIBLE.books[bookName][ch].paras[idx];
-                CURRENT.paraId = ${bookName}|${ch}|${para.ref};
-                status(선택됨: ${bookName} ${ch}장 · ${para.title||para.ref});
+                CURRENT.paraId = `${bookName}|${ch}|${para.ref}`;
+                status(`선택됨: ${bookName} ${ch}장 · ${para.title||para.ref}`);
               }
             });
 
@@ -366,7 +366,7 @@
             body.querySelector('.sermBtn').addEventListener('click', ()=>{
               CURRENT.book = bookName; CURRENT.chap = ch; CURRENT.paraIdx = idx;
               const para = BIBLE.books[bookName][ch].paras[idx];
-              CURRENT.paraId = ${bookName}|${ch}|${para.ref};
+              CURRENT.paraId = `${bookName}|${ch}|${para.ref}`;
               openSermonModal();
             });
             body.querySelector('.btnUnitCtx').addEventListener('click', ()=>{
@@ -410,11 +410,11 @@
 
     function speakVerseItemInScope(item, scope, onend){
       if(!READER.synth) return;
-      const u = new SpeechSynthesisUtterance(item.text);
+      const u = new SpeechSynthesisUtterance(String(item.text));
       applyVoice(u);
       u.onstart = ()=>{
         clearReadingHighlight(scope);
-        const line = scope.querySelector(.pline[data-verse="${item.verse}"]);
+        const line = scope.querySelector(`.pline[data-verse="${item.verse}"]`);
         if(line){ line.classList.add('reading'); line.scrollIntoView({block:'center', behavior:'smooth'}); }
       };
       u.onend = onend;
@@ -426,7 +426,6 @@
       const sameScope = READER.playing && READER.scope === paraDetailsEl;
       if(READER.playing && sameScope){ stopSpeakInline(); return; }
 
-      // “계속 낭독” 초기 상태를 현재 단락의 체크상태로 설정
       const cb = paraDetailsEl.querySelector('.keepReading');
       READER.continuous = !!(cb && cb.checked);
 
@@ -443,11 +442,10 @@
     function playNextInQueueInline(book, chap, idx){
       if(!READER.playing) return;
       if(READER.idx >= READER.q.length){
-        // 문단 종료 → 연속 모드면 다음 단락으로
         if(READER.continuous && goToNextParagraphInline(book, chap, idx)){
           READER.q = buildQueueFrom(CURRENT.book, CURRENT.chap, CURRENT.paraIdx);
           READER.idx = 0;
-          bindKeepReading(READER.scope);        // 새 단락에도 스위치 바인딩/상태 동기화
+          bindKeepReading(READER.scope);
           playNextInQueueInline(CURRENT.book, CURRENT.chap, CURRENT.paraIdx);
           return;
         }
@@ -462,7 +460,6 @@
       try{ READER.synth && READER.synth.cancel(); }catch(e){}
       if(READER.scope) clearReadingHighlight(READER.scope);
       updateInlineSpeakBtn();
-      // 연속 여부(continuous)는 유지 — 사용자가 체크를 꺼야 멈춤
       READER.scope = null; READER.btn = null;
     }
 
@@ -477,7 +474,7 @@
 
       const chaptersEls = bookEl.querySelectorAll(':scope > .chapters > details');
       const chapNums = Object.keys(BIBLE.books[book]).map(n=>parseInt(n,10)).sort((a,b)=>a-b);
-      const chPos = chapNums.indexOf(chap);
+      const chPos = chapNums.indexOf(ch);
       const chapEl = chaptersEls[chPos]; if(!chapEl) return false;
 
       const paraEls = chapEl.querySelectorAll(':scope > .paras > details.para');
@@ -525,13 +522,13 @@
       return false;
     }
 
-    /* ====== Sermon modal (CRUD) — 변경 없음 ====== */
+    /* ====== Sermon modal (CRUD) ====== */
     function getSermonMap(){ try{ return JSON.parse(localStorage.getItem(STORAGE_SERMON)||'{}'); }catch(e){ return {}; } }
     function setSermonMap(o){ localStorage.setItem(STORAGE_SERMON, JSON.stringify(o)); }
     function openSermonModal(){
       if(!CURRENT.paraId){ const openPara = treeEl.querySelector('details.para[open]'); if(!openPara) return; }
       const para = BIBLE.books[CURRENT.book][CURRENT.chap].paras[CURRENT.paraIdx];
-      modalRef.textContent = ${CURRENT.book} ${CURRENT.chap}장 · ${para.title||para.ref} (${para.ref});
+      modalRef.textContent = `${CURRENT.book} ${CURRENT.chap}장 · ${para.title||para.ref} (${para.ref})`;
       renderSermonList();
       sermonEditor.style.display = 'none';
       modalWrap.style.display = 'flex';
@@ -542,7 +539,7 @@
     function openSingleDocEditor(kind){
       // kind: 'unit' | 'whole' | 'commentary'
       const para = BIBLE.books[CURRENT.book][CURRENT.chap].paras[CURRENT.paraIdx];
-      const pid  = ${CURRENT.book}|${CURRENT.chap}|${para.ref};
+      const pid  = `${CURRENT.book}|${CURRENT.chap}|${para.ref}`;
 
       const titlePrefix = kind==='unit' ? '단위성경속 맥락'
                     : kind==='whole'? '전체성경속 맥락'
@@ -553,10 +550,10 @@
               : STORAGE_COMMENTARY;
 
       const map = getDocMap(key);
-      const doc = map[pid] || { title: ${titlePrefix} — ${para.title||para.ref}, body:'', images:[], date:'' };
+      const doc = map[pid] || { title: `${titlePrefix} — ${para.title||para.ref}`, body:'', images:[], date:'' };
 
       // 모달 열기: 목록 숨기고 에디터만 표시
-      modalRef.textContent = ${CURRENT.book} ${CURRENT.chap}장 · ${para.title||para.ref} (${para.ref}) — ${titlePrefix};
+      modalRef.textContent = `${CURRENT.book} ${CURRENT.chap}장 · ${para.title||para.ref} (${para.ref}) — ${titlePrefix}`;
       sermonList.innerHTML = '';
       sermonEditor.style.display = '';
       modalWrap.style.display = 'flex';
@@ -580,16 +577,16 @@
       if(arr.length===0){ startNewSermon(); return; }
       arr.forEach((it, idx)=>{
         const row = document.createElement('div'); row.className='item';
-        row.innerHTML = <div>
-          <div class="item-title">${escapeHtml(it.title||'(제목 없음)')}</div>
-          <div class="item-date">${it.date||'-'}</div>
-        </div>
-        <div class="ptoolbar">
-          <button data-edit="${idx}">편집</button>
-          <button data-del="${idx}" style="border-color:var(--danger);color:var(--text)">삭제</button>
-        </div>;
+        row.innerHTML = `
+          <div>
+            <div class="item-title">${escapeHtml(it.title||'(제목 없음)')}</div>
+            <div class="item-date">${it.date||'-'}</div>
+          </div>
+          <div class="ptoolbar">
+            <button data-edit="${idx}">편집</button>
+            <button data-del="${idx}" style="border-color:var(--danger);color:var(--text)">삭제</button>
+          </div>`;
         row.querySelector('[data-edit]').onclick = ()=>{
-          // (선택) 부모 모달은 닫고 새 창에서 편집
           modalWrap.style.display = 'none';
           modalWrap.setAttribute('aria-hidden','true');
           openSermonEditorWindow(idx);
@@ -600,7 +597,6 @@
       });
     }
     el('newSermonBtn').onclick = ()=>{
-      // 임시 빈 항목을 배열 맨 앞에 만들고, 그 인덱스(0)를 새 창으로 편집
       const map = getSermonMap();
       const arr = map[CURRENT.paraId] || [];
       arr.unshift({ id: crypto.randomUUID(), title:'', body:'', images:[], date:'' });
@@ -611,7 +607,7 @@
     };
 
     function startNewSermon(){
-      sermonList.innerHTML = <div class="muted" style="padding:0 14px">새 설교를 작성해 저장하면 이 단락에 붙습니다.</div>;
+      sermonList.innerHTML = '<div class="muted" style="padding:0 14px">새 설교를 작성해 저장하면 이 단락에 붙습니다.</div>';
       sermonEditor.style.display = '';
       sermonTitle.value = ''; sermonBody.value = ''; sermonThumbs.innerHTML = ''; sermonImages.value = '';
       sermonEditor.dataset.editing = '';
@@ -647,15 +643,14 @@
       const body  = sermonBody.value.trim();
       const imgs  = [...sermonThumbs.querySelectorAll('img')].map(img=>img.src);
       const now   = new Date();
-      const date  = ${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')};
+      const date  = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
 
       const para  = BIBLE.books[CURRENT.book][CURRENT.chap].paras[CURRENT.paraIdx];
-      const pid   = ${CURRENT.book}|${CURRENT.chap}|${para.ref};
+      const pid   = `${CURRENT.book}|${CURRENT.chap}|${para.ref}`;
 
-      const ctxType = sermonEditor.dataset.ctxType || ''; // 'unit'|'whole'|'commentary' 또는 ''
+      const ctxType = sermonEditor.dataset.ctxType || '';
 
       if(ctxType){
-        // ---- 단일 문서 모드 저장 ----
         const key = ctxType==='unit' ? STORAGE_UNIT_CTX
                   : ctxType==='whole'? STORAGE_WHOLE_CTX
                   : STORAGE_COMMENTARY;
@@ -667,11 +662,10 @@
         sermonEditor.dataset.ctxType = '';
         modalWrap.style.display = 'none';
         modalWrap.setAttribute('aria-hidden','true');
-        status(저장됨: ${ctxType==='unit'?'단위성경속 맥락':ctxType==='whole'?'전체성경속 맥락':'주석'});
+        status(`저장됨: ${ctxType==='unit'?'단위성경속 맥락':ctxType==='whole'?'전체성경속 맥락':'주석'}`);
         return;
       }
 
-      // ---- 기존 설교(여러 개) 저장 로직 유지 ----
       const map = getSermonMap();
       const arr = map[CURRENT.paraId] || [];
       const editing = sermonEditor.dataset.editing;
@@ -687,7 +681,7 @@
       sermonImages.value = '';
     });
 
-    /* ====== Sermon editor TTS — 동일 ====== */
+    /* ====== Sermon editor TTS ====== */
     editorSpeakBtn.onclick = ()=> toggleEditorSpeak();
     function toggleEditorSpeak(){
       if(!EDITOR_READER.synth) return alert('이 브라우저는 음성합성을 지원하지 않습니다.');
@@ -707,7 +701,6 @@
 
     /* ====== Utils ====== */
     function openSermonEditorWindow(idx){
-      // 1) 데이터 준비
       const map = getSermonMap();
       const arr = map[CURRENT.paraId] || [];
       const it  = arr[idx];
@@ -715,25 +708,41 @@
 
       const meta = {
         paraId: CURRENT.paraId,
-        ref: ${CURRENT.book} ${CURRENT.chap}장,
+        ref: `${CURRENT.book} ${CURRENT.chap}장`,
         title: it.title || '',
         body:  it.body  || '',
         images: it.images || [],
         date: it.date || ''
       };
 
-      // 2) 새 창 오픈
       const w = window.open('', '_blank', 'width=1100,height=800');
       if(!w){ alert('팝업이 차단되었습니다. 브라우저 팝업을 허용해주세요.'); return; }
 
-      // 3) 에디터 HTML (미니 템플릿) 주입
-      // - 심플하고 모던한 전용 UI
-      // - 낭독(TTS) 버튼 포함
       w.document.open();
-      w.document.write( );
+      w.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>설교 편집</title>
+        <style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Noto Sans KR,sans-serif;margin:16px} .bar{display:flex;gap:8px;align-items:center;margin-bottom:12px} input,textarea{width:100%;padding:8px;border:1px solid #ddd;border-radius:8px} textarea{min-height:50vh} .thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px} .thumbs img{width:96px;height:96px;object-fit:cover;border:1px solid #ddd;border-radius:8px}</style>
+      </head><body>
+        <div class="bar"><input id="t" placeholder="설교 제목"/></div>
+        <textarea id="b" placeholder="설교 본문"></textarea>
+        <div class="bar"><input type="file" id="imgs" accept="image/*" multiple><button id="s">저장</button><button id="d" style="border-color:#c33">삭제</button><button id="x">닫기</button></div>
+        <div class="thumbs" id="th"></div>
+        <script>
+          const meta = ${JSON.stringify(meta)};
+          const t = document.getElementById('t');
+          const b = document.getElementById('b');
+          const th = document.getElementById('th');
+          const imgs = document.getElementById('imgs');
+          t.value = meta.title; b.value = meta.body;
+          (meta.images||[]).forEach(src=>{ const im=new Image(); im.src=src; th.appendChild(im); });
+          function fileToDataURL(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); }); }
+          imgs.addEventListener('change', async ()=>{ const files=[...imgs.files||[]]; for(const f of files){ const data=await fileToDataURL(f); const im=new Image(); im.src=data; th.appendChild(im);} imgs.value=''; });
+          document.getElementById('s').onclick = ()=>{ const images=[...th.querySelectorAll('img')].map(i=>i.src); opener.postMessage({type:'sermon-save', title:t.value.trim()||'(제목 없음)', body:b.value.trim(), images}, location.origin); window.close(); };
+          document.getElementById('d').onclick = ()=>{ if(confirm('삭제할까요?')){ opener.postMessage({type:'sermon-delete'}, location.origin); window.close(); } };
+          document.getElementById('x').onclick = ()=> window.close();
+        <\/script>
+      </body></html>`);
       w.document.close();
 
-      // 4) 부모에서 저장/삭제 메시지 수신 → 로컬스토리지 반영
       const onMsg = (ev)=>{
         if(ev.origin !== location.origin) return;
         const data = ev.data||{};
@@ -743,14 +752,14 @@
         const arr = map[CURRENT.paraId] || [];
         if(data.type==='sermon-save'){
           const now = new Date();
-          const date = \\\${now.getFullYear()}-\${String(now.getMonth()+1).padStart(2,'0')}-\${String(now.getDate()).padStart(2,'0')}\;
+          const date = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
 
           if(arr[idx]){
             arr[idx] = { ...arr[idx], title: data.title, body: data.body, images: data.images, date };
           }
           map[CURRENT.paraId] = arr; setSermonMap(map);
           status('설교가 저장되었습니다.');
-          renderSermonList(); // 목록 갱신
+          renderSermonList();
           window.removeEventListener('message', onMsg);
         }
         if(data.type==='sermon-delete'){
