@@ -60,6 +60,27 @@
     .thumbs img{ width:112px; height:112px; object-fit:cover; border-radius:10px; border:1px solid var(--border) }
     .editor-bar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
     .editor-bar .grow{ flex:1 1 auto }
+
+    :root{
+      --editorBg: #f4f6ff;  /* 아주 옅은 파랑/보라톤 */
+      --editorText: #1c2333;
+    }
+    .modal { background: var(--panel); } /* 그대로 두기 */
+    .editor{
+      background: var(--editorBg);
+      color: var(--editorText);
+      border-top: 1px solid color-mix(in srgb, var(--editorBg) 70%, #000 10%);
+      border-bottom: 1px solid color-mix(in srgb, var(--editorBg) 70%, #000 10%);
+      box-shadow: inset 0 1px 0 #fff4, inset 0 -1px 0 #0002;
+      border-radius: 0;
+    }
+    .editor input[type="text"],
+    .editor textarea{
+      background: #fafcff;   /* 새하얀 흰색이 아니라 아주 옅은 아이보리톤 */
+      color: #0f1522;
+      border-color: #cfd7ff;
+    }
+
   </style>
 </head>
 <body>
@@ -144,6 +165,9 @@ const sermonThumbs = el('sermonThumbs'), sermonImages = el('sermonImages');
 const editorSpeakBtn = el('editorSpeak');
 
 const STORAGE_SERMON = 'wbps.sermons.v4';
+const STORAGE_UNIT_CTX   = 'wbps.ctx.unit.v1';    // 단위성경속 맥락
+const STORAGE_WHOLE_CTX  = 'wbps.ctx.whole.v1';   // 전체성경속 맥락
+const STORAGE_COMMENTARY = 'wbps.ctx.comm.v1';    // 주석
 const VOICE_CHOICE_KEY = 'wbps.tts.choice.v2';  // JSON: {type:"voice"|"preset", uri?, rate, pitch}
 
 let BIBLE = null;
@@ -310,10 +334,17 @@ function buildTree(){
           <div class="ptoolbar">
             <button class="primary speakBtn">낭독</button>
             <label class="chip"><input type="checkbox" class="keepReading" style="margin-right:6px">계속 낭독</label>
+        
+            <button class="ctxBtn btnUnitCtx">단위성경속 맥락</button>
+            <button class="ctxBtn btnWholeCtx">전체성경속 맥락</button>
+            <button class="ctxBtn btnCommentary">주석</button>
+        
+            <div class="spacer"></div>
             <button class="sermBtn">설교</button>
           </div>
           <div class="pcontent"></div>
         `;
+
         detPara.appendChild(body);
 
         const pcontent = body.querySelector('.pcontent');
@@ -502,6 +533,38 @@ function openSermonModal(){
 }
 el('closeModal').onclick = ()=> { modalWrap.style.display='none'; modalWrap.setAttribute('aria-hidden','true'); stopEditorSpeak(true); };
 
+function openSingleDocEditor(kind){ 
+  // kind: 'unit' | 'whole' | 'commentary'
+  const para = BIBLE.books[CURRENT.book][CURRENT.chap].paras[CURRENT.paraIdx];
+  const pid  = `${CURRENT.book}|${CURRENT.chap}|${para.ref}`;
+  const titlePrefix = kind==='unit' ? '단위성경속 맥락'
+                     : kind==='whole'? '전체성경속 맥락'
+                     : '주석';
+
+  const key = kind==='unit' ? STORAGE_UNIT_CTX
+            : kind==='whole'? STORAGE_WHOLE_CTX
+            : STORAGE_COMMENTARY;
+
+  const map = getDocMap(key);
+  const doc = map[pid] || { title: `${titlePrefix} — ${para.title||para.ref}`, body:'', images:[], date:'' };
+
+  // 모달 열기 + "목록 없이" 에디터만 보이기
+  modalRef.textContent = `${CURRENT.book} ${CURRENT.chap}장 · ${para.title||para.ref} (${para.ref}) — ${titlePrefix}`;
+  sermonList.innerHTML = '';
+  sermonEditor.style.display = '';
+  modalWrap.style.display = 'flex';
+  modalWrap.setAttribute('aria-hidden','false');
+
+  // 에디터 채우기 + 모드 표식
+  sermonTitle.value = doc.title || '';
+  sermonBody.value  = doc.body  || '';
+  sermonThumbs.innerHTML = '';
+  (doc.images||[]).forEach(src=>{ const img=new Image(); img.src=src; sermonThumbs.appendChild(img); });
+
+  sermonEditor.dataset.editing = '';              // 설교-목록 모드 아님
+  sermonEditor.dataset.ctxType = kind;            // 단일 문서 모드 표식
+}
+  
 function renderSermonList(){
   const map = getSermonMap();
   const arr = map[CURRENT.paraId] || [];
@@ -547,16 +610,43 @@ function deleteSermon(idx){
 el('cancelEdit').onclick = ()=> { sermonEditor.style.display='none'; renderSermonList(); stopEditorSpeak(true); };
 el('saveSermon').onclick = ()=> {
   const title = sermonTitle.value.trim() || '(제목 없음)';
-  const body = sermonBody.value.trim();
-  const imgs = [...sermonThumbs.querySelectorAll('img')].map(img=>img.src);
-  const now = new Date(); const date = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-  const map = getSermonMap(); const arr = map[CURRENT.paraId] || [];
+  const body  = sermonBody.value.trim();
+  const imgs  = [...sermonThumbs.querySelectorAll('img')].map(img=>img.src);
+  const now   = new Date(); 
+  const date  = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const para  = BIBLE.books[CURRENT.book][CURRENT.chap].paras[CURRENT.paraIdx];
+  const pid   = `${CURRENT.book}|${CURRENT.chap}|${para.ref}`;
+
+  const ctxType = sermonEditor.dataset.ctxType || ''; // 'unit'|'whole'|'commentary' 또는 ''
+
+  if(ctxType){ 
+    // ------ 단일 문서 모드 저장 ------
+    const key = ctxType==='unit' ? STORAGE_UNIT_CTX
+              : ctxType==='whole'? STORAGE_WHOLE_CTX
+              : STORAGE_COMMENTARY;
+
+    const map = getDocMap(key);
+    map[pid] = { title, body, images: imgs, date };
+    setDocMap(key, map);
+
+    // 저장 후 바로 종료(요청사항: 목록 없이 편집→저장 끝)
+    sermonEditor.dataset.ctxType = '';
+    modalWrap.style.display = 'none';
+    modalWrap.setAttribute('aria-hidden','true');
+    status(`저장됨: ${ctxType==='unit'?'단위성경속 맥락':ctxType==='whole'?'전체성경속 맥락':'주석'}`);
+    return;
+  }
+
+  // ------ 기존 설교(List) 저장 로직 유지 ------
+  const map = getSermonMap(); 
+  const arr = map[CURRENT.paraId] || [];
   const editing = sermonEditor.dataset.editing;
-  if(editing!==''){ const i = +editing; if(arr[i]) arr[i] = {...arr[i], title, body, images:imgs, date}; }
+  if(editing!==''){ const i=+editing; if(arr[i]) arr[i] = {...arr[i], title, body, images:imgs, date}; }
   else { arr.unshift({ id: crypto.randomUUID(), title, body, images: imgs, date }); }
   map[CURRENT.paraId] = arr; setSermonMap(map);
-  sermonEditor.style.display = 'none'; renderSermonList(); status('설교가 저장되었습니다.'); stopEditorSpeak(true);
+  sermonEditor.style.display = 'none'; renderSermonList(); status('설교가 저장되었습니다.');
 };
+
 sermonImages.addEventListener('change', async ()=>{
   const files = [...sermonImages.files||[]];
   for(const f of files){ const data = await fileToDataURL(f); const img = new Image(); img.src = data; sermonThumbs.appendChild(img); }
@@ -599,6 +689,15 @@ window.addEventListener('keydown', (e)=>{
     if(CURRENT.book!=null){ READER.playing=false; if(READER.synth) READER.synth.cancel(); goToNextParagraphInline(CURRENT.book, CURRENT.chap, CURRENT.paraIdx); }
   }
 });
+
+function getDocMap(storageKey){
+  try{ return JSON.parse(localStorage.getItem(storageKey)||'{}'); }
+  catch(e){ return {}; }
+}
+function setDocMap(storageKey, obj){
+  localStorage.setItem(storageKey, JSON.stringify(obj));
+}
+
 </script>
 </body>
 </html>
