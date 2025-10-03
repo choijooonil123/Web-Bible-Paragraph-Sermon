@@ -76,6 +76,8 @@
       --editorBg: #0f1115;   /* 어두운 배경 */
       --editorText: #e6e8ef; /* 밝은 글자색 */
       --titleBlue: #9fd0ff; /* 진한 파랑 */
+      --bookOrange: #ffb86b; /* 밝은 주황 */
+      --paraYellow: #ffe680; /* 밝은 노랑 */
     }
 
     .modal { background: var(--panel); }
@@ -95,6 +97,16 @@
     }
 
     .ptitle { color: #2563eb; } /* 진한 파랑 */
+    
+    /* 책 이름(창세기~요한계시록) = 밝은 주황 */
+    #tree > details > summary .tw{
+      color: var(--bookOrange);
+    }
+
+    /* 단락 명칭(문단 제목) = 밝은 노랑 */
+    .ptitle{ color: var(--paraYellow) !important; }
+
+
 
   </style>
 </head>
