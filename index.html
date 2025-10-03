@@ -1,81 +1,95 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Web Bible – Paragraph Sermon (Left-only)</title>
+  <title>Web Bible – Paragraph Sermon (Left-only, Korean TTS Voices)</title>
   <style>
     :root {
-      --bg: #0f1115;
-      --panel: #161922;
-      --text: #e6e8ef;
-      --muted: #9aa0ab;
-      --accent: #6ea8fe;
-      --border: #252a36;
-      --good: #2ecc71;
-      --danger: #ff6b6b;
-      --titleBlue: #7fb3ff;
-      --sidebar: 340px;
+      --bg: #0f1115; --panel: #161922; --text: #e6e8ef; --muted: #9aa0ab;
+      --accent: #6ea8fe; --border: #252a36; --good: #2ecc71; --danger: #ff6b6b; --titleBlue: #7fb3ff;
     }
     * { box-sizing: border-box }
     html, body { height: 100% }
-    body {
-      margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
-      background: var(--bg); color: var(--text);
-      display: grid; grid-template-rows: 56px 1fr; gap: 10px;
-    }
+    body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+      background:var(--bg); color:var(--text); display:grid; grid-template-rows:56px 1fr; gap:10px; }
+    header { display:flex; align-items:center; gap:12px; padding:8px 12px; background:var(--panel); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:5; }
+    header h1 { font-size:16px; margin:0; font-weight:700; letter-spacing:.2px }
+    .pill { border:1px solid var(--border); background:color-mix(in hsl, var(--panel) 80%, black 10%);
+      padding:6px 8px; border-radius:10px; display:flex; gap:8px; align-items:center; }
+    .kbd { border:1px solid var(--border); background:color-mix(in hsl, var(--panel) 70%, black 15%); border-radius:6px; padding:2px 6px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:.9em }
+    .muted { color:var(--muted) }
+    select, input[type="range"] { background:transparent; color:var(--text); border:1px solid var(--border); border-radius:8px; padding:4px 6px; }
+    option { color:#000 } /* native select option text visible */
 
-    header { display:flex; align-items:center; gap:12px; padding: 8px 12px; background: var(--panel); border-bottom: 1px solid var(--border); position: sticky; top:0; z-index: 5; }
-    header h1 { font-size: 16px; margin: 0; font-weight: 700; letter-spacing: .2px }
-    .pill { border:1px solid var(--border); background:color-mix(in hsl, var(--panel) 80%, black 10%); padding: 6px 8px; border-radius: 10px; display:flex; gap:8px; align-items:center; }
-    .kbd { border:1px solid var(--border); background:color-mix(in hsl, var(--panel) 70%, black 15%); border-radius:6px; padding: 2px 6px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:.9em }
-    button { background:color-mix(in hsl, var(--panel) 65%, black 10%); color:var(--text); border:1px solid var(--border); border-radius: 10px; padding: 6px 10px; cursor:pointer }
-    button:hover { border-color:color-mix(in hsl, var(--border) 80%, var(--accent) 20%) }
-    .primary { background: linear-gradient(180deg,color-mix(in srgb, var(--accent) 75%, white 10%), color-mix(in srgb, var(--accent) 75%, black 20%)); border-color:color-mix(in srgb, var(--accent) 70%, black 10%) }
-    .danger { border-color:var(--danger); }
+    .layout { display:grid; grid-template-columns: 1fr; gap:10px; padding:0 10px 12px }
+    .card { background:var(--panel); border:1px solid var(--border); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; min-width:0; }
+    .scroller { overflow:auto; padding:12px; }
+    .footer { padding:8px 12px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap }
 
-    /* SINGLE COLUMN LAYOUT (LEFT ONLY) */
-    .layout { display:grid; grid-template-columns: 1fr; gap: 10px; padding: 0 10px 12px }
-    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; display:flex; flex-direction:column; min-width:0; }
-    .scroller { overflow:auto; padding: 12px; }
-    .footer { padding:8px 12px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap: wrap }
-    .muted { color: var(--muted) }
-    .grow { flex:1 1 auto }
-
-    /* Sidebar tree (now main UI) */
-    #tree { padding: 8px; }
-    details { border:1px solid var(--border); border-radius:10px; padding: 6px 8px; margin-bottom: 8px; background:color-mix(in hsl, var(--panel) 80%, black 8%); }
+    /* Tree */
+    #tree { padding:8px; }
+    details { border:1px solid var(--border); border-radius:10px; padding:6px 8px; margin-bottom:8px; background:color-mix(in hsl, var(--panel) 80%, black 8%); }
     summary { cursor:pointer; list-style:none; display:flex; align-items:center; gap:8px; }
     summary::-webkit-details-marker { display:none; }
     .tw { font-weight:700 }
-    .chapters { display: grid; gap: 6px; margin-top:6px }
-    .paras { display: grid; gap: 6px; margin: 8px 0 2px 0 }
+    .chapters { display:grid; gap:6px; margin-top:6px }
+    .paras { display:grid; gap:6px; margin:8px 0 2px 0 }
 
-    .chip {font-size:.92em; padding:6px 10px; border:1px solid var(--border); border-radius:999px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; background: color-mix(in hsl, var(--panel) 88%, black 4%); white-space: nowrap;}
+    .chip { font-size:.92em; padding:6px 10px; border:1px solid var(--border); border-radius:999px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; background: color-mix(in hsl, var(--panel) 88%, black 4%); white-space:nowrap; }
     .chip:hover { border-color: var(--accent) }
     .ptitle { font-weight:800; color: var(--titleBlue); }
     .vrange { color: var(--muted); font-weight:700 }
 
-    /* Paragraph toggle body */
-    .pbody { margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 8px; }
-    .ptoolbar { display:flex; gap:8px; align-items:center; flex-wrap: wrap; margin-bottom: 8px }
-    .pline { padding: 4px 6px; border-left: 3px solid transparent; border-radius: 8px; transition: background .15s, border-color .15s }
+    /* Paragraph body inside toggle */
+    .pbody { margin-top:8px; border-top:1px dashed var(--border); padding-top:8px; }
+    .ptoolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px }
+    button { background:color-mix(in hsl, var(--panel) 65%, black 10%); color:var(--text); border:1px solid var(--border); border-radius:10px; padding:6px 10px; cursor:pointer }
+    button:hover { border-color:color-mix(in hsl, var(--border) 80%, var(--accent) 20%) }
+    .primary { background: linear-gradient(180deg,color-mix(in srgb, var(--accent) 75%, white 10%), color-mix(in srgb, var(--accent) 75%, black 20%)); border-color:color-mix(in srgb, var(--accent) 70%, black 10%) }
+    .danger { border-color:var(--danger); }
+
+    .pline { padding:4px 6px; border-left:3px solid transparent; border-radius:8px; transition: background .15s, border-color .15s }
     .pline:hover { background:color-mix(in hsl, var(--panel) 80%, black 12%) }
     .pline.reading { background: color-mix(in hsl, var(--accent) 15%, black 0%); border-left-color: var(--accent) }
-    .pv { color: var(--muted); font-size: .88em; vertical-align: super; margin-right: 4px }
+    .pv { color:var(--muted); font-size:.88em; vertical-align:super; margin-right:4px }
 
-    @media (max-width: 920px) { .layout { grid-template-columns: 1fr } }
+    /* Modal */
+    .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:50; }
+    .modal { width:min(1200px, 96vw); max-height: 94vh; overflow:auto; background:var(--panel); border:1px solid var(--border); border-radius:14px; }
+    .modal .head { position:sticky; top:0; background:var(--panel); padding:12px 14px; display:flex; gap:10px; align-items:center; border-bottom:1px solid var(--border) }
+    .list { padding: 12px 14px; display:grid; gap:8px }
+    .item { border:1px solid var(--border); border-radius:10px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+    .item-title { font-weight:700 }
+    .item-date { color: var(--muted); font-size:.92em }
+    .editor { padding:14px; display:grid; gap:12px }
+    .editor input[type="text"], .editor textarea { width:100% }
+    .editor input[type="text"] { font-size:18px; padding:10px 12px }
+    .editor textarea { min-height:360px; resize:vertical; font-size:16px; padding:12px }
+    .thumbs { display:flex; gap:8px; flex-wrap:wrap }
+    .thumbs img { width:112px; height:112px; object-fit:cover; border-radius:10px; border:1px solid var(--border) }
+    .editor-bar { display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+    .editor-bar .grow { flex:1 1 auto }
   </style>
 </head>
 <body>
   <header>
     <h1>Web Bible – Paragraph Sermon</h1>
+
+    <!-- ▼ 한국어 음성 선택 (다양한 TTS 보이스 지원) -->
+    <div class="pill">
+      <span class="muted">목소리</span>
+      <select id="voiceSelect" title="한국어 보이스 선택">
+        <option value="" selected>브라우저 기본(ko-KR)</option>
+      </select>
+    </div>
+
     <div class="grow"></div>
     <div class="pill"><span class="muted">단축키:</span> <span class="kbd">S</span> 재생/중지 <span class="kbd">N</span> 다음 단락</div>
   </header>
 
   <div class="layout">
-    <!-- LEFT ONLY: Books → Chapters → Paragraphs (toggle with toolbar + verses inside) -->
+    <!-- LEFT ONLY -->
     <section class="card">
       <div class="scroller">
         <div id="tree"></div>
@@ -86,7 +100,7 @@
     </section>
   </div>
 
-  <!-- Sermon Modal (WIDER + TTS) -->
+  <!-- Sermon Modal -->
   <div id="modalWrap" class="modal-backdrop" aria-hidden="true">
     <div class="modal">
       <div class="head">
@@ -115,29 +129,25 @@
   </div>
 
 <script>
-/* ===== State ===== */
+/* ========= State ========= */
 const el = id => document.getElementById(id);
-const treeEl = el('tree');
-const statusEl = el('status');
-
-const modalWrap = el('modalWrap');
-const modalRef = el('modalRef');
-const sermonList = el('sermonList');
-const sermonEditor = el('sermonEditor');
-const sermonTitle = el('sermonTitle');
-const sermonBody = el('sermonBody');
-const sermonThumbs = el('sermonThumbs');
-const sermonImages = el('sermonImages');
+const treeEl = el('tree'), statusEl = el('status');
+const modalWrap = el('modalWrap'), modalRef = el('modalRef');
+const sermonList = el('sermonList'), sermonEditor = el('sermonEditor');
+const sermonTitle = el('sermonTitle'), sermonBody = el('sermonBody');
+const sermonThumbs = el('sermonThumbs'), sermonImages = el('sermonImages');
 const editorSpeakBtn = el('editorSpeak');
+const voiceSelect = el('voiceSelect');
 
 const STORAGE_SERMON = 'wbps.sermons.v4';
+const VOICE_KEY = 'wbps.tts.voiceURI';
 
 let BIBLE = null;
 let CURRENT = { book:null, chap:null, paraIdx:null, paraId:null };
 let READER = { playing:false, q:[], idx:0, synth: window.speechSynthesis||null, scope:null, btn:null };
 let EDITOR_READER = { playing:false, u:null, synth: window.speechSynthesis||null };
 
-/* ===== Boot (auto-load bible JSON) ===== */
+/* ========= Load Bible ========= */
 (async function boot(){
   try{
     BIBLE = await tryFetchJSON('bible-paragraph.json');
@@ -147,6 +157,7 @@ let EDITOR_READER = { playing:false, u:null, synth: window.speechSynthesis||null
   }
   buildTree();
   status('불러오기 완료. 66권 트리가 활성화되었습니다.');
+  setupVoices(); // TTS voices after DOM ready
 })();
 async function tryFetchJSON(path){
   const res = await fetch(path, {cache:'no-store'});
@@ -154,7 +165,49 @@ async function tryFetchJSON(path){
   return await res.json();
 }
 
-/* ===== Tree (Books → Chapters → Paragraphs with inline content) ===== */
+/* ========= Korean TTS voices ========= */
+function listKoreanVoices(){
+  const all = (speechSynthesis.getVoices?.() || []);
+  // keep voices with lang starting 'ko' OR name includes 'Korean'/'한국'
+  return all.filter(v=>{
+    const n = (v.name||'').toLowerCase();
+    const l = (v.lang||'').toLowerCase();
+    return l.startsWith('ko') || n.includes('korean') || n.includes('한국') || n.includes('korea');
+  });
+}
+function setupVoices(){
+  const apply = ()=>{
+    const savedURI = localStorage.getItem(VOICE_KEY)||'';
+    const kos = listKoreanVoices();
+    voiceSelect.innerHTML = `<option value="">브라우저 기본(ko-KR)</option>`;
+    kos.forEach(v=>{
+      const label = `${v.name} — ${v.lang}${v.localService ? ' (로컬)' : ''}`;
+      const opt = document.createElement('option');
+      opt.value = v.voiceURI; opt.textContent = label;
+      if(savedURI && savedURI === v.voiceURI) opt.selected = true;
+      voiceSelect.appendChild(opt);
+    });
+    // If saved not present anymore, keep default
+  };
+  // Some browsers load voices async
+  if(speechSynthesis.onvoiceschanged !== undefined){
+    speechSynthesis.onvoiceschanged = apply;
+  }
+  // Try immediately too
+  apply();
+}
+voiceSelect.addEventListener('change', ()=>{
+  localStorage.setItem(VOICE_KEY, voiceSelect.value);
+});
+
+function getSelectedVoice(){
+  const uri = localStorage.getItem(VOICE_KEY)||'';
+  if(!uri) return null;
+  const all = speechSynthesis.getVoices?.() || [];
+  return all.find(v=>v.voiceURI===uri) || null;
+}
+
+/* ========= Tree (Books → Chapters → Paragraphs with inline content) ========= */
 function buildTree(){
   treeEl.innerHTML = '';
   if(!BIBLE){ treeEl.innerHTML = `<div class="muted">파일을 찾을 수 없습니다.</div>`; return; }
@@ -191,7 +244,7 @@ function buildTree(){
         sum.innerHTML = `<span class="vrange">(${v1}-${v2})</span> <span class="ptitle">${escapeHtml(titleText)}</span>`;
         detPara.appendChild(sum);
 
-        // body with toolbar + verses
+        // body
         const body = document.createElement('div');
         body.className = 'pbody';
         body.innerHTML = `
@@ -204,7 +257,7 @@ function buildTree(){
         `;
         detPara.appendChild(body);
 
-        // fill verses into body
+        // verses
         const pcontent = body.querySelector('.pcontent');
         (p.verses||[]).forEach(([v,t])=>{
           const line = document.createElement('div');
@@ -214,10 +267,9 @@ function buildTree(){
           pcontent.appendChild(line);
         });
 
-        // handlers
+        // events
         detPara.addEventListener('toggle', ()=>{
           if(detPara.open){
-            // set CURRENT and status when opened
             CURRENT.book = bookName; CURRENT.chap = ch; CURRENT.paraIdx = idx;
             const para = BIBLE.books[bookName][ch].paras[idx];
             CURRENT.paraId = `${bookName}|${ch}|${para.ref}`;
@@ -246,18 +298,18 @@ function buildTree(){
   }
 }
 
-/* ===== Paragraph TTS (inline scope) ===== */
+/* ========= Inline TTS ========= */
 function buildQueueFrom(book, chap, idx){
   const para = BIBLE.books[book][chap].paras[idx];
   return (para.verses||[]).map(([v,t])=>({verse:v, text:t}));
 }
-function clearReadingHighlight(scope){
-  [...scope.querySelectorAll('.pline')].forEach(el=> el.classList.remove('reading'));
-}
+function clearReadingHighlight(scope){ [...scope.querySelectorAll('.pline')].forEach(el=> el.classList.remove('reading')); }
 function speakVerseItemInScope(item, scope, onend){
   if(!READER.synth) return;
   const u = new SpeechSynthesisUtterance(item.text);
-  u.lang = 'ko-KR'; u.rate = 0.95; u.pitch = 1.0;
+  const v = getSelectedVoice();
+  if(v){ u.voice = v; u.lang = v.lang; } else { u.lang = 'ko-KR'; }
+  u.rate = 0.95; u.pitch = 1.0;
   u.onstart = ()=> {
     clearReadingHighlight(scope);
     const line = scope.querySelector(`.pline[data-verse="${item.verse}"]`);
@@ -289,8 +341,7 @@ function playNextInQueueInline(book, chap, idx){
       playNextInQueueInline(CURRENT.book, CURRENT.chap, CURRENT.paraIdx);
       return;
     }
-    stopSpeakInline();
-    return;
+    stopSpeakInline(); return;
   }
   const item = READER.q[READER.idx];
   speakVerseItemInScope(item, READER.scope, ()=>{ READER.idx++; playNextInQueueInline(book, chap, idx); });
@@ -302,38 +353,30 @@ function stopSpeakInline(){
   updateInlineSpeakBtn();
   READER.scope = null; READER.btn = null;
 }
-function updateInlineSpeakBtn(){
-  if(READER.btn) READER.btn.textContent = READER.playing ? '중지' : '낭독';
-}
+function updateInlineSpeakBtn(){ if(READER.btn) READER.btn.textContent = READER.playing ? '중지' : '낭독'; }
+
 function goToNextParagraphInline(book, chap, idx){
   const chObj = BIBLE.books[book][chap];
-
-  const booksEls = [...treeEl.children]; // details per book
+  const booksEls = [...treeEl.children];
   const bIdx = Object.keys(BIBLE.books).indexOf(book);
-  const bookEl = booksEls[bIdx];
-  if(!bookEl) return false;
+  const bookEl = booksEls[bIdx]; if(!bookEl) return false;
 
   const chaptersEls = bookEl.querySelectorAll(':scope > .chapters > details');
   const chapNums = Object.keys(BIBLE.books[book]).map(n=>parseInt(n,10)).sort((a,b)=>a-b);
   const chPos = chapNums.indexOf(chap);
-  const chapEl = chaptersEls[chPos];
-  if(!chapEl) return false;
+  const chapEl = chaptersEls[chPos]; if(!chapEl) return false;
 
   const paraEls = chapEl.querySelectorAll(':scope > .paras > details.para');
 
-  // next within chapter
   if(idx < chObj.paras.length-1){
     const nextEl = paraEls[idx+1];
     if(nextEl){
-      chapEl.open = true;
-      nextEl.open = true;
+      chapEl.open = true; nextEl.open = true;
       CURRENT.book = book; CURRENT.chap = chap; CURRENT.paraIdx = idx+1;
-      READER.scope = nextEl;
-      READER.btn = nextEl.querySelector('.speakBtn');
+      READER.scope = nextEl; READER.btn = nextEl.querySelector('.speakBtn');
       return true;
     }
   }
-  // next chapter
   if(chPos >= 0 && chPos < chapNums.length-1){
     const nextChap = chapNums[chPos+1];
     const nextChapEl = chaptersEls[chPos+1];
@@ -343,13 +386,11 @@ function goToNextParagraphInline(book, chap, idx){
         const nextParaEl = nextChapEl.querySelector(':scope > .paras > details.para');
         nextChapEl.open = true; if(nextParaEl) nextParaEl.open = true;
         CURRENT.book = book; CURRENT.chap = nextChap; CURRENT.paraIdx = 0;
-        READER.scope = nextParaEl;
-        READER.btn = nextParaEl?.querySelector('.speakBtn') || null;
+        READER.scope = nextParaEl; READER.btn = nextParaEl?.querySelector('.speakBtn') || null;
         return true;
       }
     }
   }
-  // next book
   const bookNames = Object.keys(BIBLE.books);
   const bPos = bookNames.indexOf(book);
   if(bPos >= 0 && bPos < bookNames.length-1){
@@ -362,8 +403,7 @@ function goToNextParagraphInline(book, chap, idx){
       if(nextParaEl){
         nextBookEl.open = true; nextChapEl.open = true; nextParaEl.open = true;
         CURRENT.book = nextBook; CURRENT.chap = firstChap; CURRENT.paraIdx = 0;
-        READER.scope = nextParaEl;
-        READER.btn = nextParaEl.querySelector('.speakBtn');
+        READER.scope = nextParaEl; READER.btn = nextParaEl.querySelector('.speakBtn');
         return true;
       }
     }
@@ -371,37 +411,27 @@ function goToNextParagraphInline(book, chap, idx){
   return false;
 }
 
-/* keyboard shortcuts operate on currently open paragraph (inline) */
+/* shortcuts (operate on currently open paragraph) */
 window.addEventListener('keydown', (e)=>{
   if(e.target && ['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
   if(e.key.toLowerCase()==='s'){ e.preventDefault();
     const openPara = treeEl.querySelector('details.para[open]');
-    if(openPara){
-      // find CURRENT already set by toggle listener
+    if(openPara && CURRENT.book!=null){
       const btn = openPara.querySelector('.speakBtn');
-      if(CURRENT.book!=null) toggleSpeakInline(CURRENT.book, CURRENT.chap, CURRENT.paraIdx, openPara, btn);
+      toggleSpeakInline(CURRENT.book, CURRENT.chap, CURRENT.paraIdx, openPara, btn);
     }
   }
   if(e.key.toLowerCase()==='n'){ e.preventDefault();
-    if(CURRENT.book!=null){
-      READER.playing = false; if(READER.synth) READER.synth.cancel();
-      goToNextParagraphInline(CURRENT.book, CURRENT.chap, CURRENT.paraIdx);
-    }
+    if(CURRENT.book!=null){ READER.playing = false; if(READER.synth) READER.synth.cancel(); goToNextParagraphInline(CURRENT.book, CURRENT.chap, CURRENT.paraIdx); }
   }
 });
 
-/* ===== Sermon CRUD + Modal ===== */
+/* ========= Sermon CRUD + Modal ========= */
 function getSermonMap(){ try{ return JSON.parse(localStorage.getItem(STORAGE_SERMON)||'{}'); }catch(e){ return {}; } }
 function setSermonMap(o){ localStorage.setItem(STORAGE_SERMON, JSON.stringify(o)); }
-
 function openSermonModal(){
   if(!CURRENT.paraId){
-    // if none selected, try pick first open paragraph
     const openPara = treeEl.querySelector('details.para[open]');
-    if(openPara && CURRENT.book==null){
-      // no-op; still require CURRENT set when opened by toggle
-      return;
-    }
     if(!openPara) return;
   }
   const para = BIBLE.books[CURRENT.book][CURRENT.chap].paras[CURRENT.paraIdx];
@@ -447,7 +477,6 @@ function startNewSermon(){
   sermonEditor.dataset.editing = '';
   stopEditorSpeak(true);
 }
-
 function editSermon(idx){
   const map = getSermonMap();
   const arr = map[CURRENT.paraId] || [];
@@ -460,7 +489,6 @@ function editSermon(idx){
   (it.images||[]).forEach(src=>{ const img=new Image(); img.src=src; sermonThumbs.appendChild(img); });
   stopEditorSpeak(true);
 }
-
 function deleteSermon(idx){
   if(!confirm('이 설교를 삭제할까요?')) return;
   const map = getSermonMap();
@@ -471,7 +499,6 @@ function deleteSermon(idx){
   renderSermonList();
 }
 el('cancelEdit').onclick = ()=> { sermonEditor.style.display='none'; renderSermonList(); stopEditorSpeak(true); };
-
 el('saveSermon').onclick = ()=> {
   const title = sermonTitle.value.trim() || '(제목 없음)';
   const body = sermonBody.value.trim();
@@ -488,14 +515,12 @@ el('saveSermon').onclick = ()=> {
   } else {
     arr.unshift({ id: crypto.randomUUID(), title, body, images: imgs, date });
   }
-  map[CURRENT.paraId] = arr;
-  setSermonMap(map);
+  map[CURRENT.paraId] = arr; setSermonMap(map);
   sermonEditor.style.display = 'none';
   renderSermonList();
   status('설교가 저장되었습니다.');
   stopEditorSpeak(true);
 };
-
 sermonImages.addEventListener('change', async ()=>{
   const files = [...sermonImages.files||[]];
   for(const f of files){
@@ -504,16 +529,8 @@ sermonImages.addEventListener('change', async ()=>{
   }
   sermonImages.value = '';
 });
-function fileToDataURL(file){
-  return new Promise((resolve, reject)=>{
-    const reader = new FileReader();
-    reader.onload = ()=> resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
 
-/* ===== Sermon Editor TTS ===== */
+/* ========= Sermon Editor TTS (uses selected voice) ========= */
 editorSpeakBtn.onclick = ()=> toggleEditorSpeak();
 function toggleEditorSpeak(){
   if(!EDITOR_READER.synth) return alert('이 브라우저는 음성합성을 지원하지 않습니다.');
@@ -525,7 +542,9 @@ function toggleEditorSpeak(){
   if(!text){ alert('낭독할 내용이 없습니다.'); return; }
 
   const u = new SpeechSynthesisUtterance(text.replace(/\n{2,}/g, '. ').replace(/\n/g, ' '));
-  u.lang = 'ko-KR'; u.rate = 0.96; u.pitch = 1.0;
+  const v = getSelectedVoice();
+  if(v){ u.voice = v; u.lang = v.lang; } else { u.lang = 'ko-KR'; }
+  u.rate = 0.96; u.pitch = 1.0;
   u.onend = ()=> stopEditorSpeak(true);
   EDITOR_READER.u = u;
   EDITOR_READER.synth.cancel();
@@ -540,9 +559,17 @@ function stopEditorSpeak(silent){
   editorSpeakBtn.textContent = '낭독';
 }
 
-/* ===== Utils ===== */
+/* ========= Utils ========= */
 function status(msg){ statusEl.textContent = msg; }
 function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+function fileToDataURL(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=> resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 </script>
 </body>
 </html>
