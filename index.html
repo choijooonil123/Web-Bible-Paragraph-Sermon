@@ -61,6 +61,13 @@
     .editor-bar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
     .editor-bar .grow{ flex:1 1 auto }
 
+    .item-title .date{
+      margin-left: 8px;
+      color: var(--muted);
+      font-weight: 400;
+      font-size: .92em;
+    }
+    
     :root{
       --editorBg: #0f1115;   /* 어두운 배경 */
       --editorText: #e6e8ef; /* 밝은 글자색 */
@@ -583,15 +590,17 @@
       if(arr.length===0){ startNewSermon(); return; }
       arr.forEach((it, idx)=>{
         const row = document.createElement('div'); row.className='item';
+
+        const dateHtml = it.date ? `<span class="date">${it.date}</span>` : '';
         row.innerHTML = `
-          <div>
-            <div class="item-title">${escapeHtml(it.title||'(제목 없음)')}</div>
-            <div class="item-date">${it.date||'-'}</div>
+          <div class="item-title">
+            ${escapeHtml(it.title||'(제목 없음)')} ${dateHtml}
           </div>
           <div class="ptoolbar">
             <button data-edit="${idx}">편집</button>
             <button data-del="${idx}" style="border-color:var(--danger);color:var(--text)">삭제</button>
           </div>`;
+        
         row.querySelector('[data-edit]').onclick = ()=>{
           modalWrap.style.display = 'none';
           modalWrap.setAttribute('aria-hidden','true');
