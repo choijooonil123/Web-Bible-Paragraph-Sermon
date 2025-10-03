@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Web Bible – Paragraph Sermon (Pro TTS: Azure/Google/CLOVA)</title>
+  <title>Bible Paragraph Sermon (Pro TTS: Azure/Google/CLOVA)</title>
   <style>
     :root { --bg:#0f1115; --panel:#161922; --text:#e6e8ef; --muted:#9aa0ab; --accent:#6ea8fe; --border:#252a36; --danger:#ff6b6b; --titleBlue:#7fb3ff; }
     *{ box-sizing:border-box } html,body{ height:100% }
@@ -65,7 +65,7 @@
 </head>
 <body>
   <header>
-    <h1>Web Bible – Paragraph Sermon</h1>
+    <h1>Bible Paragraph Sermon</h1>
 
     <!-- Provider -->
     <div class="pill">
@@ -132,7 +132,7 @@
         <div id="tree"></div>
       </div>
       <div class="footer">
-        <div class="muted" id="status">bible-paragraph.json을 불러오는 중…</div>
+        <div class="muted" id="status">bible_paragraphs.json을 불러오는 중…</div>
         <div class="note">※ Key/설정은 이 브라우저의 LocalStorage에 저장됩니다. 공유 PC 사용 금지!</div>
       </div>
     </section>
@@ -224,7 +224,7 @@ const TTS = {
 })();
 async function loadBible(){
   try{
-    let r = await fetch('bible-paragraph.json', {cache:'no-store'});
+    let r = await fetch('bible_paragraphs.json', {cache:'no-store'});
     if(!r.ok) throw 0;
     BIBLE = await r.json();
   }catch(_){
@@ -232,7 +232,7 @@ async function loadBible(){
       let r2 = await fetch('bible_paragraphs.json', {cache:'no-store'});
       if(!r2.ok) throw 0;
       BIBLE = await r2.json();
-    }catch(e){ status('bible-paragraph.json을 찾을 수 없습니다. 같은 폴더에 두고 다시 열어주세요.'); return; }
+    }catch(e){ status('bible_paragraphs.json을 찾을 수 없습니다. 같은 폴더에 두고 다시 열어주세요.'); return; }
   }
   buildTree();
   status('불러오기 완료. 66권 트리가 활성화되었습니다.');
