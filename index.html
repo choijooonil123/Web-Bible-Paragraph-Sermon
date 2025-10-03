@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Web Bible – Paragraph Sermon (Slim)</title>
+  <title>Web Bible – Paragraph Sermon (Final Slim)</title>
   <style>
     :root{
       --bg:#0f1115; --panel:#161922; --text:#e6e8ef; --muted:#9aa0ab;
@@ -635,12 +635,12 @@
       const pid   = `${CURRENT.book}|${CURRENT.chap}|${para.ref}`;
       const ctxType = sermonEditor.dataset.ctxType || '';
 
-      // 컨텍스트 문서 저장 (요약 분기 포함)
+      // 컨텍스트 문서 저장 (요약 포함)
       if(ctxType){
         const key = ctxType==='unit'       ? STORAGE_UNIT_CTX
                   : ctxType==='whole'      ? STORAGE_WHOLE_CTX
                   : ctxType==='commentary' ? STORAGE_COMMENTARY
-                  :                          STORAGE_SUMMARY; // summary
+                  :                          STORAGE_SUMMARY;
         const map = getDocMap(key);
         map[pid] = { title, body, images: imgs, date };
         setDocMap(key, map);
@@ -703,6 +703,7 @@
     function getDocMap(storageKey){ try{ return JSON.parse(localStorage.getItem(storageKey)||'{}'); }catch{ return {}; } }
     function setDocMap(storageKey, obj){ localStorage.setItem(storageKey, JSON.stringify(obj)); }
 
+    /* --------- Sermon Editor Popup (Slim) --------- */
     function openSermonEditorWindow(idx){
       const map = getSermonMap();
       const arr = map[CURRENT.paraId] || [];
@@ -722,28 +723,116 @@
       if(!w){ alert('팝업이 차단되었습니다. 브라우저 팝업을 허용해주세요.'); return; }
 
       w.document.open();
-      w.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>설교 편집</title>
-        <style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Noto Sans KR,sans-serif;margin:16px} .bar{display:flex;gap:8px;align-items:center;margin-bottom:12px} input,textarea{width:100%;padding:8px;border:1px solid #ddd;border-radius:8px} textarea{min-height:50vh} .thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px} .thumbs img{width:96px;height:96px;object-fit:cover;border:1px solid #ddd;border-radius:8px}</style>
-      </head><body>
-        <div class="bar"><input id="t" placeholder="설교 제목"/></div>
-        <textarea id="b" placeholder="설교 본문"></textarea>
-        <div class="bar"><input type="file" id="imgs" accept="image/*" multiple><button id="s">저장</button><button id="d" style="border-color:#c33">삭제</button><button id="x">닫기</button></div>
-        <div class="thumbs" id="th"></div>
-        <script>
-          const meta = ${JSON.stringify(meta)};
-          const t = document.getElementById('t');
-          const b = document.getElementById('b');
-          const th = document.getElementById('th');
-          const imgs = document.getElementById('imgs');
-          t.value = meta.title; b.value = meta.body;
-          (meta.images||[]).forEach(src=>{ const im=new Image(); im.src=src; th.appendChild(im); });
-          function fileToDataURL(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); }); }
-          imgs.addEventListener('change', async ()=>{ const files=[...imgs.files||[]]; for(const f of files){ const data=await fileToDataURL(f); const im=new Image(); im.src=data; th.appendChild(im);} imgs.value=''; });
-          document.getElementById('s').onclick = ()=>{ const images=[...th.querySelectorAll('img')].map(i=>i.src); opener.postMessage({type:'sermon-save', title:t.value.trim()||'(제목 없음)', body:b.value.trim(), images}, location.origin); window.close(); };
-          document.getElementById('d').onclick = ()=>{ if(confirm('삭제할까요?')){ opener.postMessage({type:'sermon-delete'}, location.origin); window.close(); } };
-          document.getElementById('x').onclick = ()=> window.close();
-        <\/script>
-      </body></html>`);
+      w.document.write(`<!DOCTYPE html><html lang="ko">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>설교 편집</title>
+  <style>
+    :root{ --bg:#0f1115; --panel:#161922; --text:#e6e8ef; --muted:#9aa0ab; --border:#252a36; --accent:#6ea8fe; --danger:#ff6b6b; }
+    *{ box-sizing:border-box }
+    html,body{ height:100% }
+    body{
+      margin:0; background:var(--bg); color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR",sans-serif;
+      display:grid; grid-template-rows:56px 1fr 56px; gap:8px;
+    }
+    header, footer{
+      display:flex; align-items:center; gap:8px; padding:8px 12px;
+      background:var(--panel); border-bottom:1px solid var(--border);
+    }
+    footer{ border-top:1px solid var(--border); border-bottom:none }
+    header strong{ font-size:14px }
+    main{ padding:0 12px 12px }
+    .row{ display:grid; gap:8px; margin-bottom:10px }
+    input[type="text"], textarea{
+      width:100%; background:#161922; color:#e6e8ef; border:1px solid #2a3040; border-radius:8px; padding:10px 12px;
+    }
+    textarea{ min-height:55vh; resize:vertical }
+    .thumbs{ display:flex; gap:8px; flex-wrap:wrap; margin-top:6px }
+    .thumbs img{ width:96px; height:96px; object-fit:cover; border-radius:8px; border:1px solid var(--border) }
+    .muted{ color:var(--muted) }
+    button{
+      background:color-mix(in hsl, var(--panel) 65%, black 10%); color:var(--text);
+      border:1px solid var(--border); border-radius:8px; padding:8px 12px; cursor:pointer;
+    }
+    button:hover{ border-color:color-mix(in hsl, var(--border) 80%, var(--accent) 20%) }
+    .primary{
+      background:linear-gradient(180deg,color-mix(in srgb, var(--accent) 75%, white 10%), color-mix(in srgb, var(--accent) 75%, black 20%));
+      border-color:color-mix(in srgb, var(--accent) 70%, black 10%);
+    }
+    .danger{ border-color:var(--danger); color:#ffd7d7; background:transparent }
+    .grow{ flex:1 1 auto }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>설교 편집</strong>
+    <span class="muted" id="ref"></span>
+    <div class="grow"></div>
+    <button id="x">닫기</button>
+  </header>
+
+  <main>
+    <div class="row">
+      <input id="t" placeholder="설교 제목" />
+      <textarea id="b" placeholder="설교 본문(텍스트)"></textarea>
+    </div>
+    <div class="row">
+      <input type="file" id="imgs" accept="image/*" multiple />
+      <div class="thumbs" id="th"></div>
+    </div>
+  </main>
+
+  <footer>
+    <span class="muted" id="date"></span>
+    <div class="grow"></div>
+    <button class="danger" id="d">삭제</button>
+    <button class="primary" id="s">저장</button>
+  </footer>
+
+  <script>
+    const meta = ${JSON.stringify(meta)};
+    const t = document.getElementById('t');
+    const b = document.getElementById('b');
+    const th = document.getElementById('th');
+    const imgs = document.getElementById('imgs');
+    const ref = document.getElementById('ref');
+    const date = document.getElementById('date');
+
+    ref.textContent = '— ' + meta.ref;
+    date.textContent = meta.date ? ('최근 저장: ' + meta.date) : '';
+    t.value = meta.title; b.value = meta.body;
+    (meta.images||[]).forEach(src=>{ const im=new Image(); im.src=src; th.appendChild(im); });
+
+    function fileToDataURL(file){
+      return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); });
+    }
+    imgs.addEventListener('change', async ()=>{
+      const files=[...imgs.files||[]];
+      for(const f of files){ const data=await fileToDataURL(f); const im=new Image(); im.src=data; th.appendChild(im); }
+      imgs.value='';
+    });
+
+    // 저장
+    document.getElementById('s').onclick = ()=>{
+      const images=[...th.querySelectorAll('img')].map(i=>i.src);
+      opener.postMessage({ type:'sermon-save', title:(t.value||'').trim()||'(제목 없음)', body:(b.value||'').trim(), images }, location.origin);
+      window.close();
+    };
+
+    // 삭제
+    document.getElementById('d').onclick = ()=>{
+      if(confirm('삭제할까요?')){
+        opener.postMessage({ type:'sermon-delete' }, location.origin);
+        window.close();
+      }
+    };
+
+    // 닫기
+    document.getElementById('x').onclick = ()=> window.close();
+  <\/script>
+</body>
+</html>`);
       w.document.close();
 
       const onMsg = (ev)=>{
