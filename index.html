@@ -585,23 +585,24 @@
       const para = BIBLE.books[CURRENT.book][CURRENT.chap].paras[CURRENT.paraIdx];
       const pid  = `${CURRENT.book}|${CURRENT.chap}|${para.ref}`;
 
-      const titlePrefix = kind==='unit' ? '단위성경속 맥락'
-                    : kind==='whole'? '전체성경속 맥락'
-                    : '주석';
-                    : kind==='commentary' ? '주석'
-                    : '내용요약'; // summary
+      const titlePrefix =
+        kind==='unit'        ? '단위성경속 맥락' :
+        kind==='whole'       ? '전체성경속 맥락' :
+        kind==='commentary'  ? '주석' :
+                               '내용요약'; // summary
 
-      const key = kind==='unit' ? STORAGE_UNIT_CTX
-              : kind==='whole' ? STORAGE_WHOLE_CTX
-              : STORAGE_COMMENTARY;
-              : kind==='commentary' ? STORAGE_COMMENTARY
-              : STORAGE_SUMMARY; // summary
+      const key =
+        kind==='unit'        ? STORAGE_UNIT_CTX      :
+        kind==='whole'       ? STORAGE_WHOLE_CTX     :
+        kind==='commentary'  ? STORAGE_COMMENTARY    :
+                              STORAGE_SUMMARY;      // summary
 
       const map = getDocMap(key);
-      const doc = map[pid] || { title: `${titlePrefix} — ${para.title||para.ref}`, body:'', images:[], date:''
-            title: `${titlePrefix} — ${para.title||para.ref}`,
-            body: (kind==='summary' ? '핵심 내용을 간결하게 요약해 적어주세요.' : ''),
-            images:[], date:'' 
+      const doc = map[pid] || {
+        title: `${titlePrefix} — ${para.title||para.ref}`,
+        body:  (kind==='summary' ? '핵심 내용을 간결하게 요약해 적어주세요.' : ''),
+        images: [],
+        date:   ''
       };
       
 
