@@ -146,7 +146,7 @@
         </div>
         <div class="thumbs" id="sermonThumbs"></div>
       </div>
-      <div class="footer" style="padding:10px 14px; border-top:1px solid var(--border)">
+        <div id="modalFooterNew" class="footer" style="padding:10px 14px; border-top:1px solid var(--border)">
         <button id="newSermonBtn" class="primary">새 설교</button>
       </div>
     </div>
@@ -154,6 +154,7 @@
 
   <script>
     /* ====== State ====== */
+    const modalFooterNew = el('modalFooterNew');
     const el = id => document.getElementById(id);
     const treeEl = el('tree'), statusEl = el('status');
     const voiceSelect = el('voiceSelect'), testVoiceBtn = el('testVoice');
@@ -535,6 +536,7 @@
       sermonEditor.style.display = 'none';
       modalWrap.style.display = 'flex';
       modalWrap.setAttribute('aria-hidden','false');
+      if (modalFooterNew) modalFooterNew.style.display = ''; // 설교 경로 → 표시
     }
     el('closeModal').onclick = ()=> { modalWrap.style.display='none'; modalWrap.setAttribute('aria-hidden','true'); stopEditorSpeak(true); };
 
@@ -560,6 +562,7 @@
       sermonEditor.style.display = '';
       modalWrap.style.display = 'flex';
       modalWrap.setAttribute('aria-hidden','false');
+      if (modalFooterNew) modalFooterNew.style.display = 'none'; // 컨텍스트 경로 → 숨김
 
       // 에디터 채우기
       sermonTitle.value = doc.title || '';
@@ -599,6 +602,7 @@
       });
     }
     el('newSermonBtn').onclick = ()=>{
+      if (sermonEditor.dataset.ctxType) return; // 컨텍스트 편집 모드에선 막기
       const map = getSermonMap();
       const arr = map[CURRENT.paraId] || [];
       arr.unshift({ id: crypto.randomUUID(), title:'', body:'', images:[], date:'' });
