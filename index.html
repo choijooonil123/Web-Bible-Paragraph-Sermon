@@ -709,9 +709,11 @@
       const ctxType = sermonEditor.dataset.ctxType || '';
 
       if(ctxType){
-        const key = ctxType==='unit' ? STORAGE_UNIT_CTX
-                  : ctxType==='whole'? STORAGE_WHOLE_CTX
-                  : STORAGE_COMMENTARY;
+        // ✅ 수정
+        const key = ctxType==='unit'        ? STORAGE_UNIT_CTX
+                  : ctxType==='whole'       ? STORAGE_WHOLE_CTX
+                  : ctxType==='commentary'  ? STORAGE_COMMENTARY
+                  :                           STORAGE_SUMMARY; // summary 분기 추가
 
         const map = getDocMap(key);
         map[pid] = { title, body, images: imgs, date };
