@@ -1,10 +1,33 @@
+ <!DOCTYPE html>
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bible Paragraph Sermon (Pro TTS: Azure/Google/CLOVA)</title>
+  <title>Web Bible – Paragraph Sermon (Left-only, Korean TTS Voices)</title>
+  <title>Web Bible – Paragraph Sermon (Left-only, Multi Korean TTS)</title>
   <style>
+    :root {
+      --bg: #0f1115; --panel: #161922; --text: #e6e8ef; --muted: #9aa0ab;
+      --accent: #6ea8fe; --border: #252a36; --good: #2ecc71; --danger: #ff6b6b; --titleBlue: #7fb3ff;
+    }
+    * { box-sizing: border-box }
+    html, body { height: 100% }
+    body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+      background:var(--bg); color:var(--text); display:grid; grid-template-rows:56px 1fr; gap:10px; }
+    header { display:flex; align-items:center; gap:12px; padding:8px 12px; background:var(--panel); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:5; }
+    header h1 { font-size:16px; margin:0; font-weight:700; letter-spacing:.2px }
+    .pill { border:1px solid var(--border); background:color-mix(in hsl, var(--panel) 80%, black 10%);
+      padding:6px 8px; border-radius:10px; display:flex; gap:8px; align-items:center; }
+    .kbd { border:1px solid var(--border); background:color-mix(in hsl, var(--panel) 70%, black 15%); border-radius:6px; padding:2px 6px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:.9em }
+    .muted { color:var(--muted) }
+    select, input[type="range"] { background:transparent; color:var(--text); border:1px solid var(--border); border-radius:8px; padding:4px 6px; }
+    option { color:#000 } /* native select option text visible */
+
+    .layout { display:grid; grid-template-columns: 1fr; gap:10px; padding:0 10px 12px }
+    .card { background:var(--panel); border:1px solid var(--border); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; min-width:0; }
+    .scroller { overflow:auto; padding:12px; }
+    .footer { padding:8px 12px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap }
     :root { --bg:#0f1115; --panel:#161922; --text:#e6e8ef; --muted:#9aa0ab; --accent:#6ea8fe; --border:#252a36; --danger:#ff6b6b; --titleBlue:#7fb3ff; }
     *{ box-sizing:border-box } html,body{ height:100% }
     body{ margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans KR",sans-serif; background:var(--bg); color:var(--text); display:grid; grid-template-rows:64px 1fr; gap:10px }
@@ -12,7 +35,7 @@
     header h1{ font-size:16px; margin:0; font-weight:700 }
     .muted{ color:var(--muted) }
     .pill{ display:flex; gap:8px; align-items:center; border:1px solid var(--border); background:color-mix(in hsl, var(--panel) 80%, black 8%); padding:6px 8px; border-radius:10px }
-    select, input[type="text"], input[type="password"], input[type="url"]{ background:transparent; color:var(--text); border:1px solid var(--border); border-radius:8px; padding:4px 6px }
+    select, input[type="range"]{ background:transparent; color:var(--text); border:1px solid var(--border); border-radius:8px; padding:4px 6px }
     option{ color:#000 }
     button{ background:color-mix(in hsl, var(--panel) 65%, black 10%); color:var(--text); border:1px solid var(--border); border-radius:10px; padding:6px 10px; cursor:pointer }
     button:hover{ border-color:color-mix(in hsl, var(--border) 80%, var(--accent) 20%) }
@@ -22,9 +45,20 @@
     .card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; min-width:0 }
     .scroller{ overflow:auto; padding:12px }
     .footer{ padding:8px 12px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap }
-    .note{ font-size:12px; color:var(--muted) }
 
     /* Tree */
+    #tree { padding:8px; }
+    details { border:1px solid var(--border); border-radius:10px; padding:6px 8px; margin-bottom:8px; background:color-mix(in hsl, var(--panel) 80%, black 8%); }
+    summary { cursor:pointer; list-style:none; display:flex; align-items:center; gap:8px; }
+    summary::-webkit-details-marker { display:none; }
+    .tw { font-weight:700 }
+    .chapters { display:grid; gap:6px; margin-top:6px }
+    .paras { display:grid; gap:6px; margin:8px 0 2px 0 }
+
+    .chip { font-size:.92em; padding:6px 10px; border:1px solid var(--border); border-radius:999px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; background: color-mix(in hsl, var(--panel) 88%, black 4%); white-space:nowrap; }
+    .chip:hover { border-color: var(--accent) }
+    .ptitle { font-weight:800; color: var(--titleBlue); }
+    .vrange { color: var(--muted); font-weight:700 }
     #tree{ padding:8px }
     details{ border:1px solid var(--border); border-radius:10px; padding:6px 8px; margin-bottom:8px; background:color-mix(in hsl, var(--panel) 80%, black 8%) }
     summary{ cursor:pointer; list-style:none; display:flex; align-items:center; gap:8px }
@@ -37,7 +71,18 @@
     .ptitle{ font-weight:800; color:var(--titleBlue) }
     .vrange{ color:var(--muted); font-weight:700 }
 
-    /* Paragraph body */
+    /* Paragraph body inside toggle */
+    .pbody { margin-top:8px; border-top:1px dashed var(--border); padding-top:8px; }
+    .ptoolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px }
+    button { background:color-mix(in hsl, var(--panel) 65%, black 10%); color:var(--text); border:1px solid var(--border); border-radius:10px; padding:6px 10px; cursor:pointer }
+    button:hover { border-color:color-mix(in hsl, var(--border) 80%, var(--accent) 20%) }
+    .primary { background: linear-gradient(180deg,color-mix(in srgb, var(--accent) 75%, white 10%), color-mix(in srgb, var(--accent) 75%, black 20%)); border-color:color-mix(in srgb, var(--accent) 70%, black 10%) }
+    .danger { border-color:var(--danger); }
+
+    .pline { padding:4px 6px; border-left:3px solid transparent; border-radius:8px; transition: background .15s, border-color .15s }
+    .pline:hover { background:color-mix(in hsl, var(--panel) 80%, black 12%) }
+    .pline.reading { background: color-mix(in hsl, var(--accent) 15%, black 0%); border-left-color: var(--accent) }
+    .pv { color:var(--muted); font-size:.88em; vertical-align:super; margin-right:4px }
     .pbody{ margin-top:8px; border-top:1px dashed var(--border); padding-top:8px }
     .ptoolbar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px }
     .pline{ padding:4px 6px; border-left:3px solid transparent; border-radius:8px; transition: background .15s, border-color .15s }
@@ -46,6 +91,21 @@
     .pv{ color:var(--muted); font-size:.88em; vertical-align:super; margin-right:4px }
 
     /* Modal */
+    .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:50; }
+    .modal { width:min(1200px, 96vw); max-height: 94vh; overflow:auto; background:var(--panel); border:1px solid var(--border); border-radius:14px; }
+    .modal .head { position:sticky; top:0; background:var(--panel); padding:12px 14px; display:flex; gap:10px; align-items:center; border-bottom:1px solid var(--border) }
+    .list { padding: 12px 14px; display:grid; gap:8px }
+    .item { border:1px solid var(--border); border-radius:10px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+    .item-title { font-weight:700 }
+    .item-date { color: var(--muted); font-size:.92em }
+    .editor { padding:14px; display:grid; gap:12px }
+    .editor input[type="text"], .editor textarea { width:100% }
+    .editor input[type="text"] { font-size:18px; padding:10px 12px }
+    .editor textarea { min-height:360px; resize:vertical; font-size:16px; padding:12px }
+    .thumbs { display:flex; gap:8px; flex-wrap:wrap }
+    .thumbs img { width:112px; height:112px; object-fit:cover; border-radius:10px; border:1px solid var(--border) }
+    .editor-bar { display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+    .editor-bar .grow { flex:1 1 auto }
     .modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:50 }
     .modal{ width:min(1200px, 96vw); max-height:94vh; overflow:auto; background:var(--panel); border:1px solid var(--border); border-radius:14px }
     .modal .head{ position:sticky; top:0; background:var(--panel); padding:12px 14px; display:flex; gap:10px; align-items:center; border-bottom:1px solid var(--border) }
@@ -65,449 +125,306 @@
 </head>
 <body>
   <header>
-    <h1>Bible Paragraph Sermon</h1>
+    <h1>Web Bible – Paragraph Sermon</h1>
 
-    <!-- Provider -->
+    <!-- ▼ 한국어 음성 선택 (다양한 TTS 보이스 지원) -->
+    <!-- 한국어 보이스 / 프리셋 -->
     <div class="pill">
-      <span class="muted">TTS</span>
-      <select id="ttsProvider">
-        <option value="webspeech">Web Speech</option>
-        <option value="azure">Azure</option>
-        <option value="google">Google</option>
-        <option value="clova">CLOVA</option>
+      <span class="muted">목소리</span>
+      <select id="voiceSelect" title="한국어 보이스 선택">
+        <option value="" selected>브라우저 기본(ko-KR)</option>
+        <option value="">브라우저 기본(ko-KR)</option>
       </select>
+      <button id="testVoice">테스트</button>
     </div>
 
-    <!-- WebSpeech controls -->
-    <div class="pill" id="webspeechControls">
-      <span class="muted">목소리</span>
-      <select id="voiceSelect"><option value="">기본(ko-KR)</option></select>
+    <div class="pill">
       <span class="muted">속도</span>
       <input id="rateCtl" type="range" min="0.6" max="1.4" step="0.02" value="0.95" />
       <span class="muted">톤</span>
       <input id="pitchCtl" type="range" min="0.6" max="1.4" step="0.02" value="1.00" />
-      <button id="testVoice">테스트</button>
     </div>
 
-    <!-- Azure -->
-    <div class="pill" id="azureControls" style="display:none">
-      <span class="muted">Region</span>
-      <input id="azRegion" placeholder="koreacentral" size="10" />
-      <span class="muted">Key</span>
-      <input id="azKey" type="password" placeholder="API Key" size="10" />
-      <span class="muted">Voice</span>
-      <input id="azVoice" placeholder="ko-KR-SunHiNeural" size="16" />
-      <button id="saveAzure" class="primary">저장</button>
+    <div class="pill" id="voiceHint" style="display:none">
+      <span class="muted">한국어 보이스가 1개뿐이라 스타일 프리셋을 추가했습니다.</span>
     </div>
 
-    <!-- Google -->
-    <div class="pill" id="googleControls" style="display:none">
-      <span class="muted">API Key</span>
-      <input id="gKey" type="password" placeholder="AIza..." size="14" />
-      <span class="muted">Voice</span>
-      <input id="gVoice" placeholder="ko-KR-Neural2-A" size="16" />
-      <button id="saveGoogle" class="primary">저장</button>
-    </div>
-
-    <!-- CLOVA -->
-    <div class="pill" id="clovaControls" style="display:none">
-      <span class="muted">URL</span>
-      <input id="cUrl" type="url" placeholder="https://.../tts" size="20" />
-      <span class="muted">Key ID</span>
-      <input id="cKeyId" placeholder="NCP 키 ID" size="10" />
-      <span class="muted">Key</span>
-      <input id="cKey" type="password" placeholder="NCP 키" size="10" />
-      <span class="muted">Speaker</span>
-      <input id="cSpeaker" placeholder="nara 등" size="8" />
-      <button id="saveClova" class="primary">저장</button>
-    </div>
-
+    <div class="grow"></div>
+    <div class="pill"><span class="muted">단축키:</span> <span class="kbd">S</span> 재생/중지 <span class="kbd">N</span> 다음 단락</div>
     <div style="flex:1"></div>
-    <div class="pill"><span class="muted">단축키:</span> S 재생/중지 · N 다음 단락</div>
+    <div class="pill"><span class="muted">단축키:</span> <span> S</span> 재생/중지 <span> · N</span> 다음 단락</div>
   </header>
 
   <div class="layout">
-    <section class="card">
-      <div class="scroller">
-        <div id="tree"></div>
-      </div>
-      <div class="footer">
-        <div class="muted" id="status">bible_paragraphs.json을 불러오는 중…</div>
-        <div class="note">※ Key/설정은 이 브라우저의 LocalStorage에 저장됩니다. 공유 PC 사용 금지!</div>
-      </div>
-    </section>
-  </div>
-
-  <!-- Sermon Modal -->
-  <div id="modalWrap" class="modal-backdrop" aria-hidden="true">
-    <div class="modal">
-      <div class="head">
-        <strong>단락 설교</strong>
-        <span class="muted" id="modalRef">—</span>
-        <div class="grow"></div>
-        <button id="closeModal">닫기</button>
-      </div>
-      <div class="list" id="sermonList"></div>
-      <div class="editor" id="sermonEditor" style="display:none">
-        <input type="text" id="sermonTitle" placeholder="설교 제목" />
-        <textarea id="sermonBody" placeholder="설교 본문(텍스트)"></textarea>
-        <div class="editor-bar">
-          <input type="file" id="sermonImages" accept="image/*" multiple />
-          <div class="grow"></div>
-          <button id="editorSpeak" class="primary">낭독</button>
-          <button id="saveSermon" class="primary">저장</button>
-          <button id="cancelEdit">취소</button>
-        </div>
-        <div class="thumbs" id="sermonThumbs"></div>
-      </div>
-      <div class="footer" style="padding:10px 14px; border-top:1px solid var(--border)">
-        <button id="newSermonBtn" class="primary">새 설교</button>
-      </div>
-    </div>
+@@ -129,25 +131,27 @@ <h1>Web Bible – Paragraph Sermon</h1>
   </div>
 
 <script>
-/* ===== Refs & State ===== */
+/* ========= State ========= */
+/* ====== State ====== */
 const el = id => document.getElementById(id);
 const treeEl = el('tree'), statusEl = el('status');
-
-const ttsProviderSel = el('ttsProvider');
-const webspeechControls = el('webspeechControls');
-const azureControls = el('azureControls');
-const googleControls = el('googleControls');
-const clovaControls = el('clovaControls');
-
 const voiceSelect = el('voiceSelect'), testVoiceBtn = el('testVoice');
-const rateCtl = el('rateCtl'), pitchCtl = el('pitchCtl');
-
-const azRegion = el('azRegion'), azKey = el('azKey'), azVoice = el('azVoice'), saveAzureBtn = el('saveAzure');
-const gKey = el('gKey'), gVoice = el('gVoice'), saveGoogleBtn = el('saveGoogle');
-const cUrl = el('cUrl'), cKeyId = el('cKeyId'), cKey = el('cKey'), cSpeaker = el('cSpeaker'), saveClovaBtn = el('saveClova');
+const rateCtl = el('rateCtl'), pitchCtl = el('pitchCtl'), voiceHint = el('voiceHint');
 
 const modalWrap = el('modalWrap'), modalRef = el('modalRef');
 const sermonList = el('sermonList'), sermonEditor = el('sermonEditor');
 const sermonTitle = el('sermonTitle'), sermonBody = el('sermonBody');
 const sermonThumbs = el('sermonThumbs'), sermonImages = el('sermonImages');
 const editorSpeakBtn = el('editorSpeak');
+const voiceSelect = el('voiceSelect');
 
 const STORAGE_SERMON = 'wbps.sermons.v4';
-const VOICE_CHOICE_KEY = 'wbps.tts.choice.v2';
-const TTS_PROVIDER_KEY = 'wbps.tts.provider';
-const AZURE_CONF_KEY = 'wbps.azure.conf';
-const GOOGLE_CONF_KEY = 'wbps.google.conf';
-const CLOVA_CONF_KEY  = 'wbps.clova.conf';
+const VOICE_KEY = 'wbps.tts.voiceURI';
+const VOICE_CHOICE_KEY = 'wbps.tts.choice.v2';  // JSON: {type:"voice"|"preset", uri?, rate, pitch}
 
 let BIBLE = null;
 let CURRENT = { book:null, chap:null, paraIdx:null, paraId:null };
+let READER = { playing:false, q:[], idx:0, synth: window.speechSynthesis||null, scope:null, btn:null };
+let EDITOR_READER = { playing:false, u:null, synth: window.speechSynthesis||null };
 
-const TTS = {
-  mode: 'webspeech', // 'webspeech'|'azure'|'google'|'clova'
-  ws: { synth: window.speechSynthesis||null, playing:false, scope:null, btn:null, q:[], idx:0, continuous:false },
-  ext: {  // 공용 외부 엔진 (Azure/Google/CLOVA)
-    audio: new Audio(), playing:false, scope:null, btn:null, q:[], idx:0, continuous:false,
-    getAudioURL: null // provider별 함수 주입
-  },
-  conf: {
-    azure: {region:'', key:'', voice:'ko-KR-SunHiNeural'},
-    google:{key:'', voice:'ko-KR-Neural2-A'},
-    clova: {url:'', keyId:'', key:'', speaker:'nara'}
-  }
-};
-
-/* ===== Boot ===== */
-(async function init(){
-  restoreProvider();
-  loadConfs();
-  await loadBible();
-  await setupWebSpeechVoices();
-  wireUI();
-})();
-async function loadBible(){
+/* ========= Load Bible ========= */
+/* ====== Boot ====== */
+(async function boot(){
   try{
-    let r = await fetch('bible_paragraphs.json', {cache:'no-store'});
-    if(!r.ok) throw 0;
-    BIBLE = await r.json();
-  }catch(_){
-    try{
-      let r2 = await fetch('bible_paragraphs.json', {cache:'no-store'});
-      if(!r2.ok) throw 0;
-      BIBLE = await r2.json();
-    }catch(e){ status('bible_paragraphs.json을 찾을 수 없습니다. 같은 폴더에 두고 다시 열어주세요.'); return; }
+    BIBLE = await tryFetchJSON('bible-paragraph.json');
+@@ -157,57 +161,133 @@ <h1>Web Bible – Paragraph Sermon</h1>
   }
   buildTree();
   status('불러오기 완료. 66권 트리가 활성화되었습니다.');
-}
+  setupVoices(); // TTS voices after DOM ready
+  await setupVoices();
+})();
+async function tryFetchJSON(path){
+  const res = await fetch(path, {cache:'no-store'});
+  if(!res.ok) throw new Error('fetch failed');
+  return await res.json();
+async function tryFetchJSON(path){ const res = await fetch(path, {cache:'no-store'}); if(!res.ok) throw 0; return await res.json(); }
 
-/* ===== Provider UI ===== */
-function restoreProvider(){
-  const saved = localStorage.getItem(TTS_PROVIDER_KEY)||'webspeech';
-  TTS.mode = saved;
-  ttsProviderSel.value = saved;
-  toggleProviderUI();
-  setExtGetter();
-}
-function toggleProviderUI(){
-  webspeechControls.style.display = (TTS.mode==='webspeech') ? '' : 'none';
-  azureControls.style.display     = (TTS.mode==='azure')     ? '' : 'none';
-  googleControls.style.display    = (TTS.mode==='google')    ? '' : 'none';
-  clovaControls.style.display     = (TTS.mode==='clova')     ? '' : 'none';
-}
-ttsProviderSel.onchange = ()=>{
-  TTS.mode = ttsProviderSel.value;
-  localStorage.setItem(TTS_PROVIDER_KEY, TTS.mode);
-  toggleProviderUI();
-  setExtGetter();
-  status(`TTS: ${TTS.mode.toUpperCase()}`);
-};
-function setExtGetter(){
-  if(TTS.mode==='azure')   TTS.ext.getAudioURL = getAzureAudioURL;
-  if(TTS.mode==='google')  TTS.ext.getAudioURL = getGoogleAudioURL;
-  if(TTS.mode==='clova')   TTS.ext.getAudioURL = getClovaAudioURL;
-}
-
-/* ===== Config load/save ===== */
-function loadConfs(){
-  try{ const a=JSON.parse(localStorage.getItem(AZURE_CONF_KEY)||'{}'); Object.assign(TTS.conf.azure,a); azRegion.value=a.region||''; azKey.value=a.key||''; azVoice.value=a.voice||'ko-KR-SunHiNeural'; }catch{}
-  try{ const g=JSON.parse(localStorage.getItem(GOOGLE_CONF_KEY)||'{}'); Object.assign(TTS.conf.google,g); gKey.value=g.key||''; gVoice.value=g.voice||'ko-KR-Neural2-A'; }catch{}
-  try{ const c=JSON.parse(localStorage.getItem(CLOVA_CONF_KEY)||'{}'); Object.assign(TTS.conf.clova,c); cUrl.value=c.url||''; cKeyId.value=c.keyId||''; cKey.value=c.key||''; cSpeaker.value=c.speaker||'nara'; }catch{}
-}
-saveAzureBtn.onclick = ()=>{
-  const conf = {region:azRegion.value.trim(), key:azKey.value.trim(), voice:azVoice.value.trim()||'ko-KR-SunHiNeural'};
-  localStorage.setItem(AZURE_CONF_KEY, JSON.stringify(conf)); Object.assign(TTS.conf.azure, conf); status('Azure 저장 완료');
-};
-saveGoogleBtn.onclick = ()=>{
-  const conf = {key:gKey.value.trim(), voice:gVoice.value.trim()||'ko-KR-Neural2-A'};
-  localStorage.setItem(GOOGLE_CONF_KEY, JSON.stringify(conf)); Object.assign(TTS.conf.google, conf); status('Google 저장 완료');
-};
-saveClovaBtn.onclick = ()=>{
-  const conf = {url:cUrl.value.trim(), keyId:cKeyId.value.trim(), key:cKey.value.trim(), speaker:cSpeaker.value.trim()||'nara'};
-  localStorage.setItem(CLOVA_CONF_KEY, JSON.stringify(conf)); Object.assign(TTS.conf.clova, conf); status('CLOVA 저장 완료');
-};
-
-/* ===== WebSpeech voices ===== */
+/* ====== Voice util ====== */
 function waitForVoices(timeout=1500){
   return new Promise(resolve=>{
     const have = speechSynthesis.getVoices?.();
     if (have && have.length) return resolve(have);
     const t = setTimeout(()=> resolve(speechSynthesis.getVoices?.()||[]), timeout);
-    speechSynthesis.onvoiceschanged = ()=>{ clearTimeout(t); resolve(speechSynthesis.getVoices?.()||[]); };
+    speechSynthesis.onvoiceschanged = ()=>{
+      clearTimeout(t);
+      resolve(speechSynthesis.getVoices?.()||[]);
+    };
   });
 }
+
+/* ========= Korean TTS voices ========= */
+function listKoreanVoices(){
+  const all = (speechSynthesis.getVoices?.() || []);
+  // keep voices with lang starting 'ko' OR name includes 'Korean'/'한국'
+  return all.filter(v=>{
+    const n = (v.name||'').toLowerCase();
+    const l = (v.lang||'').toLowerCase();
 function getKoreanVoices(all){
   return (all||[]).filter(v=>{
     const n=(v.name||'').toLowerCase(), l=(v.lang||'').toLowerCase();
     return l.startsWith('ko') || n.includes('korean') || n.includes('한국') || n.includes('korea');
   });
 }
+function setupVoices(){
+  const apply = ()=>{
+    const savedURI = localStorage.getItem(VOICE_KEY)||'';
+    const kos = listKoreanVoices();
+    voiceSelect.innerHTML = `<option value="">브라우저 기본(ko-KR)</option>`;
 function presetsForSingleVoice(){
+  // 여러 스타일 프리셋(같은 보이스 다른 톤/속도)
   return [
-    {label:'프리셋 · 저음/느림', rate:0.85, pitch:0.85},
-    {label:'프리셋 · 고음/느림', rate:0.90, pitch:1.20},
-    {label:'프리셋 · 빠름', rate:1.20, pitch:1.05},
-    {label:'프리셋 · 밝게', rate:1.05, pitch:1.25},
-    {label:'프리셋 · 라디오톤', rate:1.00, pitch:0.90},
-    {label:'프리셋 · 낭독체', rate:0.95, pitch:1.00},
+    {id:'preset-soft-low',  label:'프리셋 · 저음/느림',   rate:0.85, pitch:0.85},
+    {id:'preset-soft-high', label:'프리셋 · 고음/느림',   rate:0.90, pitch:1.20},
+    {id:'preset-fast',      label:'프리셋 · 빠름',       rate:1.20, pitch:1.05},
+    {id:'preset-bright',    label:'프리셋 · 밝게',       rate:1.05, pitch:1.25},
+    {id:'preset-radio',     label:'프리셋 · 라디오톤',   rate:1.00, pitch:0.90},
+    {id:'preset-reading',   label:'프리셋 · 낭독체',     rate:0.95, pitch:1.00},
   ];
 }
-async function setupWebSpeechVoices(){
+async function setupVoices(){
   const all = await waitForVoices();
   const kos = getKoreanVoices(all);
 
-  voiceSelect.innerHTML = '<option value="">기본(ko-KR)</option>';
-  if(kos.length){
-    const og = document.createElement('optgroup'); og.label='한국어 보이스';
+  // build select
+  voiceSelect.innerHTML = '';
+  const defaultOpt = document.createElement('option');
+  defaultOpt.value = JSON.stringify({type:'default'});
+  defaultOpt.textContent = '브라우저 기본(ko-KR)';
+  voiceSelect.appendChild(defaultOpt);
+
+  if(kos.length > 0){
+    const og = document.createElement('optgroup');
+    og.label = '한국어 보이스';
     kos.forEach(v=>{
+      const label = `${v.name} — ${v.lang}${v.localService ? ' (로컬)' : ''}`;
       const opt = document.createElement('option');
-      opt.value = v.voiceURI;
+      opt.value = v.voiceURI; opt.textContent = label;
+      if(savedURI && savedURI === v.voiceURI) opt.selected = true;
+      voiceSelect.appendChild(opt);
+      opt.value = JSON.stringify({type:'voice', uri:v.voiceURI});
       opt.textContent = `${v.name} — ${v.lang}${v.localService ? ' (로컬)' : ''}`;
       og.appendChild(opt);
     });
+    // If saved not present anymore, keep default
     voiceSelect.appendChild(og);
   }
-  if(kos.length<=1){
-    const pg = document.createElement('optgroup'); pg.label='스타일 프리셋';
+
+  if(kos.length <= 1){
+    // add presets (style variants)
+    const pg = document.createElement('optgroup');
+    pg.label = '스타일 프리셋';
     presetsForSingleVoice().forEach(p=>{
       const opt = document.createElement('option');
-      opt.value = `preset:${p.rate}:${p.pitch}`;
-      opt.textContent = p.label; pg.appendChild(opt);
+      opt.value = JSON.stringify({type:'preset', rate:p.rate, pitch:p.pitch});
+      opt.textContent = p.label;
+      pg.appendChild(opt);
     });
     voiceSelect.appendChild(pg);
+    voiceHint.style.display = '';
+  } else {
+    voiceHint.style.display = 'none';
   }
+
+  // restore choice
   const saved = localStorage.getItem(VOICE_CHOICE_KEY);
-  if(saved){ const idx=[...voiceSelect.options].findIndex(o=>o.value===saved); if(idx>=0) voiceSelect.selectedIndex=idx; }
-  else { localStorage.setItem(VOICE_CHOICE_KEY, voiceSelect.value); }
-  voiceSelect.addEventListener('change', ()=> localStorage.setItem(VOICE_CHOICE_KEY, voiceSelect.value));
-  testVoiceBtn.onclick = ()=> {
-    if(TTS.mode!=='webspeech'){ alert('Web Speech 모드에서 테스트하세요.'); return; }
-    speakSampleWS('태초에 하나님이 천지를 창조하시니라.');
+  if(saved){
+    const idx = [...voiceSelect.options].findIndex(o=>o.value===saved);
+    if(idx>=0) voiceSelect.selectedIndex = idx;
+  } else {
+    localStorage.setItem(VOICE_CHOICE_KEY, voiceSelect.value);
+  }
+
+  voiceSelect.addEventListener('change', ()=>{
+    localStorage.setItem(VOICE_CHOICE_KEY, voiceSelect.value);
+  });
+
+  // test button
+  testVoiceBtn.onclick = ()=>{
+    speakSample('태초에 하나님이 천지를 창조하시니라.');
   };
+  // Some browsers load voices async
+  if(speechSynthesis.onvoiceschanged !== undefined){
+    speechSynthesis.onvoiceschanged = apply;
 }
-function resolveWS(u){
-  const choice = localStorage.getItem(VOICE_CHOICE_KEY)||'';
+function resolveVoiceChoice(){
+  try{
+    const obj = JSON.parse(localStorage.getItem(VOICE_CHOICE_KEY)||'{"type":"default"}');
+    return obj;
+  }catch{ return {type:'default'}; }
+}
+function pickVoiceByURI(uri){
+  return (speechSynthesis.getVoices?.()||[]).find(v=>v.voiceURI===uri) || null;
+}
+function applyVoice(u){
+  const choice = resolveVoiceChoice();
+  // manual sliders (always applied as base)
   const baseRate = parseFloat(rateCtl.value||'0.95');
   const basePitch = parseFloat(pitchCtl.value||'1');
-  if(choice.startsWith('preset:')){
-    const [_, r, p] = choice.split(':');
-    u.lang='ko-KR'; u.rate = clamp(parseFloat(r)*baseRate/0.95, 0.5, 2); u.pitch = clamp(parseFloat(p)*basePitch/1, 0, 2);
-  } else if(choice){
-    const v = (speechSynthesis.getVoices?.()||[]).find(v=>v.voiceURI===choice);
-    if(v){ u.voice=v; u.lang=v.lang; } else u.lang='ko-KR';
-    u.rate=baseRate; u.pitch=basePitch;
-  } else { u.lang='ko-KR'; u.rate=baseRate; u.pitch=basePitch; }
+
+  if(choice.type==='voice'){
+    const v = pickVoiceByURI(choice.uri);
+    if(v){ u.voice = v; u.lang = v.lang; } else { u.lang = 'ko-KR'; }
+    u.rate = baseRate; u.pitch = basePitch;
+  } else if(choice.type==='preset'){
+    u.lang = 'ko-KR';
+    u.rate = clamp((choice.rate ?? 0.95) * baseRate / 0.95, 0.5, 2);
+    u.pitch = clamp((choice.pitch ?? 1.0) * basePitch / 1.0, 0, 2);
+  } else {
+    u.lang = 'ko-KR'; u.rate = baseRate; u.pitch = basePitch;
+  }
+  // Try immediately too
+  apply();
 }
-function speakSampleWS(text){
-  try{ speechSynthesis.cancel(); }catch(e){}
-  const u = new SpeechSynthesisUtterance(text);
-  resolveWS(u); speechSynthesis.speak(u);
-}
+voiceSelect.addEventListener('change', ()=>{
+  localStorage.setItem(VOICE_KEY, voiceSelect.value);
+});
+
+function getSelectedVoice(){
+  const uri = localStorage.getItem(VOICE_KEY)||'';
+  if(!uri) return null;
+  const all = speechSynthesis.getVoices?.() || [];
+  return all.find(v=>v.voiceURI===uri) || null;
 function clamp(n,min,max){ return Math.max(min, Math.min(max,n)); }
-
-/* ===== External TTS: Azure / Google / CLOVA ===== */
-async function getAzureAudioURL(text){
-  const {region,key,voice} = TTS.conf.azure;
-  if(!region || !key) throw new Error('Azure Region/Key 미설정');
-  const endpoint = `https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`;
-  const ssml = `<speak version="1.0" xml:lang="ko-KR"><voice xml:lang="ko-KR" name="${voice||'ko-KR-SunHiNeural'}">${escapeXml(text)}</voice></speak>`;
-  const res = await fetch(endpoint, {
-    method:'POST',
-    headers:{
-      'Ocp-Apim-Subscription-Key': key,
-      'Content-Type':'application/ssml+xml',
-      'X-Microsoft-OutputFormat':'audio-24khz-48kbitrate-mono-mp3',
-      'User-Agent':'WebBible-ParagraphSermon'
-    },
-    body:ssml
-  });
-  if(!res.ok) throw new Error('Azure 응답 오류: '+res.status);
-  const blob = await res.blob();
-  return URL.createObjectURL(blob);
-}
-async function getGoogleAudioURL(text){
-  const {key, voice} = TTS.conf.google;
-  if(!key) throw new Error('Google API Key 미설정');
-  const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${encodeURIComponent(key)}`;
-  const body = {
-    input: { text },
-    // SSML로 바꾸고 싶으면 input:{ssml:"<speak>...</speak>"}
-    voice: { languageCode: "ko-KR", name: voice||"ko-KR-Neural2-A" },
-    audioConfig: { audioEncoding: "MP3" }
-  };
-  const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
-  if(!res.ok) throw new Error('Google 응답 오류: '+res.status);
-  const json = await res.json();
-  if(!json.audioContent) throw new Error('audioContent 없음');
-  const b = atob(json.audioContent);
-  const arr = new Uint8Array(b.length);
-  for(let i=0;i<b.length;i++) arr[i]=b.charCodeAt(i);
-  const blob = new Blob([arr], {type:'audio/mpeg'});
-  return URL.createObjectURL(blob);
-}
-async function getClovaAudioURL(text){
-  const {url, keyId, key, speaker} = TTS.conf.clova;
-  if(!url || !keyId || !key) throw new Error('CLOVA URL/Key 미설정');
-  const body = `speaker=${encodeURIComponent(speaker||'nara')}&speed=0&pitch=0&volume=0&format=mp3&text=${encodeURIComponent(text)}`;
-  const res = await fetch(url, {
-    method:'POST',
-    headers:{
-      'X-NCP-APIGW-API-KEY-ID': keyId,
-      'X-NCP-APIGW-API-KEY': key,
-      'Content-Type':'application/x-www-form-urlencoded; charset=utf-8'
-    },
-    body
-  });
-  if(!res.ok) throw new Error('CLOVA 응답 오류: '+res.status);
-  const blob = await res.blob(); // 대부분 mp3로 반환
-  return URL.createObjectURL(blob);
+function speakSample(text){
+  const synth = window.speechSynthesis;
+  try{ synth.cancel(); }catch(e){}
+  const u = new SpeechSynthesisUtterance(text);
+  applyVoice(u);
+  synth.speak(u);
 }
 
-/* ===== UI wiring (editor speak etc.) ===== */
-function wireUI(){
-  editorSpeakBtn.onclick = async ()=>{
-    const text = [sermonTitle.value.trim(), sermonBody.value.trim()].filter(Boolean).join('. ').replace(/\n{2,}/g, '. ').replace(/\n/g,' ');
-    if(!text) return alert('낭독할 내용이 없습니다.');
-    if(TTS.mode==='webspeech'){ speakSampleWS(text); return; }
-    try{
-      const url = await TTS.ext.getAudioURL(text);
-      const a = new Audio(url); a.play();
-    }catch(e){ alert('외부 TTS 오류: '+e.message); }
-  };
-}
-
-/* ===== Tree build ===== */
+/* ========= Tree (Books → Chapters → Paragraphs with inline content) ========= */
+/* ====== Tree (books → chapters → paragraphs with inline content) ====== */
 function buildTree(){
   treeEl.innerHTML = '';
-  for(const bookName of Object.keys(BIBLE.books)){
-    const detBook = document.createElement('details');
-    const sumBook = document.createElement('summary');
+  if(!BIBLE){ treeEl.innerHTML = `<div class="muted">파일을 찾을 수 없습니다.</div>`; return; }
+@@ -218,8 +298,7 @@ <h1>Web Bible – Paragraph Sermon</h1>
     sumBook.innerHTML = `<span class="tw">${bookName}</span>`;
     detBook.appendChild(sumBook);
 
+    const chWrap = document.createElement('div');
+    chWrap.className = 'chapters';
     const chWrap = document.createElement('div'); chWrap.className='chapters';
     const chapters = Object.keys(BIBLE.books[bookName]).map(n=>parseInt(n,10)).sort((a,b)=>a-b);
 
     for(const ch of chapters){
-      const detChap = document.createElement('details');
-      const sumChap = document.createElement('summary');
+@@ -228,14 +307,12 @@ <h1>Web Bible – Paragraph Sermon</h1>
       sumChap.innerHTML = `<span class="chip">${ch}장</span>`;
       detChap.appendChild(sumChap);
 
+      const parWrap = document.createElement('div');
+      parWrap.className = 'paras';
       const parWrap = document.createElement('div'); parWrap.className='paras';
       const paras = BIBLE.books[bookName][ch].paras || [];
       paras.forEach((p, idx)=>{
+        const detPara = document.createElement('details');
+        detPara.className = 'para';
         const detPara = document.createElement('details'); detPara.className='para';
 
+        // (시작절-끝절)
+        // (start-end) from p.ref like "1:1-5"
         const m = String(p.ref||'').match(/^(\d+):(\d+)(?:-(\d+))?$/);
         const v1 = m ? m[2] : '?', v2 = m ? (m[3]||m[2]) : '?';
         const titleText = p.title || p.ref;
-
-        const sum = document.createElement('summary');
+@@ -244,7 +321,6 @@ <h1>Web Bible – Paragraph Sermon</h1>
         sum.innerHTML = `<span class="vrange">(${v1}-${v2})</span> <span class="ptitle">${escapeHtml(titleText)}</span>`;
         detPara.appendChild(sum);
 
+        // body
         const body = document.createElement('div');
         body.className = 'pbody';
         body.innerHTML = `
-          <div class="ptoolbar">
-            <button class="primary speakBtn">낭독</button>
-            <label class="chip"><input type="checkbox" class="keepReading" style="margin-right:6px">계속 낭독</label>
-            <button class="sermBtn">설교</button>
-          </div>
-          <div class="pcontent"></div>
+@@ -257,7 +333,6 @@ <h1>Web Bible – Paragraph Sermon</h1>
         `;
         detPara.appendChild(body);
 
+        // verses
         const pcontent = body.querySelector('.pcontent');
         (p.verses||[]).forEach(([v,t])=>{
           const line = document.createElement('div');
-          line.className = 'pline';
-          line.dataset.verse = v;
-          line.innerHTML = `<sup class="pv">${v}</sup>${t}`;
+@@ -267,7 +342,6 @@ <h1>Web Bible – Paragraph Sermon</h1>
           pcontent.appendChild(line);
         });
 
+        // events
         detPara.addEventListener('toggle', ()=>{
           if(detPara.open){
             CURRENT.book = bookName; CURRENT.chap = ch; CURRENT.paraIdx = idx;
-            const para = BIBLE.books[bookName][ch].paras[idx];
-            CURRENT.paraId = `${bookName}|${ch}|${para.ref}`;
-            status(`선택됨: ${bookName} ${ch}장 · ${para.title||para.ref}`);
+@@ -277,8 +351,9 @@ <h1>Web Bible – Paragraph Sermon</h1>
           }
         });
 
+        body.querySelector('.speakBtn').addEventListener('click', ()=>{
+          toggleSpeakInline(bookName, ch, idx, detPara, body.querySelector('.speakBtn'));
         const speakBtn = body.querySelector('.speakBtn');
         speakBtn.addEventListener('click', ()=>{
-          startReading(bookName, ch, idx, detPara, speakBtn);
+          toggleSpeakInline(bookName, ch, idx, detPara, speakBtn);
         });
         body.querySelector('.sermBtn').addEventListener('click', ()=>{
           CURRENT.book = bookName; CURRENT.chap = ch; CURRENT.paraIdx = idx;
-          const para = BIBLE.books[bookName][ch].paras[idx];
-          CURRENT.paraId = `${bookName}|${ch}|${para.ref}`;
-          openSermonModal();
-        });
-
-        parWrap.appendChild(detPara);
-      });
-
+@@ -293,12 +368,13 @@ <h1>Web Bible – Paragraph Sermon</h1>
       detChap.appendChild(parWrap);
       chWrap.appendChild(detChap);
     }
@@ -517,219 +434,210 @@ function buildTree(){
   }
 }
 
-/* ===== Reading controller (WebSpeech vs External) ===== */
+/* ========= Inline TTS ========= */
+/* ====== Inline TTS ====== */
 function buildQueueFrom(book, chap, idx){
   const para = BIBLE.books[book][chap].paras[idx];
   return (para.verses||[]).map(([v,t])=>({verse:v, text:t}));
-}
-function clearHighlight(scope){ [...scope.querySelectorAll('.pline')].forEach(el=> el.classList.remove('reading')); }
-
-function startReading(book, chap, idx, scope, btn){
-  if(TTS.mode==='webspeech'){
-    const same = TTS.ws.playing && TTS.ws.scope===scope;
-    if(TTS.ws.playing && same){ stopWS(); return; }
-    const cb = scope.querySelector('.keepReading'); TTS.ws.continuous = !!(cb && cb.checked);
-    TTS.ws.q = buildQueueFrom(book, chap, idx); TTS.ws.idx = 0;
-    TTS.ws.playing = true; TTS.ws.scope = scope; TTS.ws.btn = btn;
-    cb && (cb.onchange = ()=> TTS.ws.continuous = cb.checked);
-    updateBtn(); playNextWS(book, chap, idx);
-  } else {
-    const same = TTS.ext.playing && TTS.ext.scope===scope;
-    if(TTS.ext.playing && same){ stopEXT(); return; }
-    const cb = scope.querySelector('.keepReading'); TTS.ext.continuous = !!(cb && cb.checked);
-    TTS.ext.q = buildQueueFrom(book, chap, idx); TTS.ext.idx = 0;
-    TTS.ext.playing = true; TTS.ext.scope = scope; TTS.ext.btn = btn;
-    cb && (cb.onchange = ()=> TTS.ext.continuous = cb.checked);
-    updateBtn(); playNextEXT(book, chap, idx);
-  }
-}
-function updateBtn(){
-  const btn = TTS.mode==='webspeech' ? TTS.ws.btn : TTS.ext.btn;
-  const playing = TTS.mode==='webspeech' ? TTS.ws.playing : TTS.ext.playing;
-  if(btn) btn.textContent = playing?'중지':'낭독';
-}
-
-/* WebSpeech path */
-function playNextWS(book, chap, idx){
-  if(!TTS.ws.playing) return;
-  if(TTS.ws.idx >= TTS.ws.q.length){
-    if(TTS.ws.continuous && goToNextParagraph(book, chap, idx, 'ws')) return;
-    stopWS(); return;
-  }
-  const item = TTS.ws.q[TTS.ws.idx];
+@@ -307,9 +383,7 @@ <h1>Web Bible – Paragraph Sermon</h1>
+function speakVerseItemInScope(item, scope, onend){
+  if(!READER.synth) return;
   const u = new SpeechSynthesisUtterance(item.text);
-  resolveWS(u);
-  u.onstart = ()=>{
-    clearHighlight(TTS.ws.scope);
-    const line = TTS.ws.scope.querySelector(`.pline[data-verse="${item.verse}"]`);
-    if(line){ line.classList.add('reading'); line.scrollIntoView({block:'center', behavior:'smooth'}); }
-  };
-  u.onend = ()=>{ TTS.ws.idx++; playNextWS(book, chap, idx); };
-  TTS.ws.synth.speak(u);
+  const v = getSelectedVoice();
+  if(v){ u.voice = v; u.lang = v.lang; } else { u.lang = 'ko-KR'; }
+  u.rate = 0.95; u.pitch = 1.0;
+  applyVoice(u);
+  u.onstart = ()=> {
+    clearReadingHighlight(scope);
+    const line = scope.querySelector(`.pline[data-verse="${item.verse}"]`);
+@@ -354,9 +428,9 @@ <h1>Web Bible – Paragraph Sermon</h1>
+  READER.scope = null; READER.btn = null;
 }
-function stopWS(){
-  TTS.ws.playing = false;
-  try{ TTS.ws.synth && TTS.ws.synth.cancel(); }catch(e){}
-  if(TTS.ws.scope) clearHighlight(TTS.ws.scope);
-  updateBtn(); TTS.ws.scope=null; TTS.ws.btn=null;
-}
+function updateInlineSpeakBtn(){ if(READER.btn) READER.btn.textContent = READER.playing ? '중지' : '낭독'; }
 
-/* External path (Azure/Google/CLOVA) */
-async function playNextEXT(book, chap, idx){
-  if(!TTS.ext.playing) return;
-  if(TTS.ext.idx >= TTS.ext.q.length){
-    if(TTS.ext.continuous && await goToNextParagraph(book, chap, idx, 'ext')) return;
-    stopEXT(); return;
-  }
-  const item = TTS.ext.q[TTS.ext.idx];
-  try{
-    const url = await TTS.ext.getAudioURL(item.text);
-    TTS.ext.audio.src = url;
-    TTS.ext.audio.onplay = ()=>{
-      clearHighlight(TTS.ext.scope);
-      const line = TTS.ext.scope.querySelector(`.pline[data-verse="${item.verse}"]`);
-      if(line){ line.classList.add('reading'); line.scrollIntoView({block:'center', behavior:'smooth'}); }
-    };
-    TTS.ext.audio.onended = ()=>{ TTS.ext.idx++; playNextEXT(book, chap, idx); };
-    await TTS.ext.audio.play();
-  }catch(e){
-    console.error(e); status('외부 TTS 오류: '+e.message); stopEXT();
-  }
-}
-function stopEXT(){
-  TTS.ext.playing = false;
-  try{ TTS.ext.audio.pause(); }catch(e){}
-  if(TTS.ext.scope) clearHighlight(TTS.ext.scope);
-  updateBtn(); TTS.ext.scope=null; TTS.ext.btn=null;
-}
-
-/* Next paragraph navigation */
-async function goToNextParagraph(book, chap, idx, kind){
+function goToNextParagraphInline(book, chap, idx){
   const chObj = BIBLE.books[book][chap];
+
   const booksEls = [...treeEl.children];
   const bIdx = Object.keys(BIBLE.books).indexOf(book);
   const bookEl = booksEls[bIdx]; if(!bookEl) return false;
-
-  const chaptersEls = bookEl.querySelectorAll(':scope > .chapters > details');
-  const chapNums = Object.keys(BIBLE.books[book]).map(n=>parseInt(n,10)).sort((a,b)=>a-b);
-  const chPos = chapNums.indexOf(chap);
-  const chapEl = chaptersEls[chPos]; if(!chapEl) return false;
-  const paraEls = chapEl.querySelectorAll(':scope > .paras > details.para');
-
-  const switchTo = (nextEl, nb, nc, ni)=>{
-    if(!nextEl) return false;
-    chapEl.open = true; nextEl.open = true;
-    CURRENT.book=nb; CURRENT.chap=nc; CURRENT.paraIdx=ni;
-    if(kind==='ws'){ TTS.ws.scope=nextEl; TTS.ws.btn=nextEl.querySelector('.speakBtn'); TTS.ws.q=buildQueueFrom(nb,nc,ni); TTS.ws.idx=0; playNextWS(nb,nc,ni); }
-    else { TTS.ext.scope=nextEl; TTS.ext.btn=nextEl.querySelector('.speakBtn'); TTS.ext.q=buildQueueFrom(nb,nc,ni); TTS.ext.idx=0; await playNextEXT(nb,nc,ni); }
-    return true;
-  };
-
-  if(idx < chObj.paras.length-1){
-    return switchTo(paraEls[idx+1], book, chap, idx+1);
-  }
-  if(chPos >= 0 && chPos < chapNums.length-1){
-    const nextChap = chapNums[chPos+1];
-    const nextChapEl = chaptersEls[chPos+1];
-    const nextParaEl = nextChapEl?.querySelector(':scope > .paras > details.para');
-    if(nextParaEl){
-      nextChapEl.open = true; nextParaEl.open = true;
-      CURRENT.book = book; CURRENT.chap = nextChap; CURRENT.paraIdx = 0;
-      if(kind==='ws'){ TTS.ws.scope=nextParaEl; TTS.ws.btn=nextParaEl.querySelector('.speakBtn'); TTS.ws.q=buildQueueFrom(book,nextChap,0); TTS.ws.idx=0; playNextWS(book,nextChap,0); }
-      else { TTS.ext.scope=nextParaEl; TTS.ext.btn=nextParaEl.querySelector('.speakBtn'); TTS.ext.q=buildQueueFrom(book,nextChap,0); TTS.ext.idx=0; await playNextEXT(book,nextChap,0); }
-      return true;
-    }
-  }
-  const bookNames = Object.keys(BIBLE.books);
-  const bPos = bookNames.indexOf(book);
-  if(bPos >= 0 && bPos < bookNames.length-1){
-    const nextBook = bookNames[bPos+1];
-    const nextBookEl = booksEls[bPos+1];
-    const firstChap = Math.min(...Object.keys(BIBLE.books[nextBook]).map(n=>parseInt(n,10)));
-    const nextChapEl = nextBookEl.querySelector(':scope > .chapters > details');
-    const nextParaEl = nextChapEl?.querySelector(':scope > .paras > details.para');
-    if(nextParaEl){
-      nextBookEl.open = true; nextChapEl.open = true; nextParaEl.open = true;
-      if(kind==='ws'){ TTS.ws.scope=nextParaEl; TTS.ws.btn=nextParaEl.querySelector('.speakBtn'); TTS.ws.q=buildQueueFrom(nextBook,firstChap,0); TTS.ws.idx=0; playNextWS(nextBook,firstChap,0); }
-      else { TTS.ext.scope=nextParaEl; TTS.ext.btn=nextParaEl.querySelector('.speakBtn'); TTS.ext.q=buildQueueFrom(nextBook,firstChap,0); TTS.ext.idx=0; await playNextEXT(nextBook,firstChap,0); }
-      CURRENT.book=nextBook; CURRENT.chap=firstChap; CURRENT.paraIdx=0;
-      return true;
-    }
-  }
+@@ -411,29 +485,11 @@ <h1>Web Bible – Paragraph Sermon</h1>
   return false;
 }
 
-/* ===== Sermon CRUD (same as before) ===== */
+/* shortcuts (operate on currently open paragraph) */
+window.addEventListener('keydown', (e)=>{
+  if(e.target && ['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
+  if(e.key.toLowerCase()==='s'){ e.preventDefault();
+    const openPara = treeEl.querySelector('details.para[open]');
+    if(openPara && CURRENT.book!=null){
+      const btn = openPara.querySelector('.speakBtn');
+      toggleSpeakInline(CURRENT.book, CURRENT.chap, CURRENT.paraIdx, openPara, btn);
+    }
+  }
+  if(e.key.toLowerCase()==='n'){ e.preventDefault();
+    if(CURRENT.book!=null){ READER.playing = false; if(READER.synth) READER.synth.cancel(); goToNextParagraphInline(CURRENT.book, CURRENT.chap, CURRENT.paraIdx); }
+  }
+});
+
+/* ========= Sermon CRUD + Modal ========= */
+/* ====== Sermon modal (CRUD) ====== */
 function getSermonMap(){ try{ return JSON.parse(localStorage.getItem(STORAGE_SERMON)||'{}'); }catch(e){ return {}; } }
 function setSermonMap(o){ localStorage.setItem(STORAGE_SERMON, JSON.stringify(o)); }
 function openSermonModal(){
+  if(!CURRENT.paraId){
+    const openPara = treeEl.querySelector('details.para[open]');
+    if(!openPara) return;
+  }
   if(!CURRENT.paraId){ const openPara = treeEl.querySelector('details.para[open]'); if(!openPara) return; }
   const para = BIBLE.books[CURRENT.book][CURRENT.chap].paras[CURRENT.paraIdx];
   modalRef.textContent = `${CURRENT.book} ${CURRENT.chap}장 · ${para.title||para.ref} (${para.ref})`;
   renderSermonList();
-  sermonEditor.style.display = 'none';
-  modalWrap.style.display = 'flex';
-  modalWrap.setAttribute('aria-hidden','false');
-}
-el('closeModal').onclick = ()=> { modalWrap.style.display='none'; modalWrap.setAttribute('aria-hidden','true'); };
-
-function renderSermonList(){
-  const map = getSermonMap();
-  const arr = map[CURRENT.paraId] || [];
+@@ -449,16 +505,15 @@ <h1>Web Bible – Paragraph Sermon</h1>
   sermonList.innerHTML = '';
   if(arr.length===0){ startNewSermon(); return; }
   arr.forEach((it, idx)=>{
+    const row = document.createElement('div');
+    row.className = 'item';
     const row = document.createElement('div'); row.className='item';
     row.innerHTML = `
       <div>
         <div class="item-title">${escapeHtml(it.title||'(제목 없음)')}</div>
         <div class="item-date">${it.date||'-'}</div>
       </div>
+      <div class="toolbar">
       <div class="ptoolbar">
         <button data-edit="${idx}">편집</button>
+        <button data-del="${idx}" class="danger">삭제</button>
         <button data-del="${idx}" style="border-color:var(--danger);color:var(--text)">삭제</button>
       </div>`;
     row.querySelector('[data-edit]').onclick = ()=> editSermon(idx);
     row.querySelector('[data-del]').onclick = ()=> deleteSermon(idx);
-    sermonList.appendChild(row);
-  });
-}
-el('newSermonBtn').onclick = ()=> startNewSermon();
-
+@@ -470,106 +525,77 @@ <h1>Web Bible – Paragraph Sermon</h1>
 function startNewSermon(){
   sermonList.innerHTML = `<div class="muted" style="padding:0 14px">새 설교를 작성해 저장하면 이 단락에 붙습니다.</div>`;
   sermonEditor.style.display = '';
+  sermonTitle.value = '';
+  sermonBody.value = '';
+  sermonThumbs.innerHTML = '';
+  sermonImages.value = '';
   sermonTitle.value = ''; sermonBody.value = ''; sermonThumbs.innerHTML = ''; sermonImages.value = '';
   sermonEditor.dataset.editing = '';
+  stopEditorSpeak(true);
 }
 function editSermon(idx){
+  const map = getSermonMap();
+  const arr = map[CURRENT.paraId] || [];
+  const it = arr[idx]; if(!it) return;
+  sermonEditor.style.display = '';
+  sermonEditor.dataset.editing = String(idx);
+  sermonTitle.value = it.title||'';
+  sermonBody.value = it.body||'';
+  sermonThumbs.innerHTML = '';
   const map = getSermonMap(); const arr = map[CURRENT.paraId] || []; const it = arr[idx]; if(!it) return;
   sermonEditor.style.display = ''; sermonEditor.dataset.editing = String(idx);
   sermonTitle.value = it.title||''; sermonBody.value = it.body||''; sermonThumbs.innerHTML = '';
   (it.images||[]).forEach(src=>{ const img=new Image(); img.src=src; sermonThumbs.appendChild(img); });
+  stopEditorSpeak(true);
 }
 function deleteSermon(idx){
   if(!confirm('이 설교를 삭제할까요?')) return;
+  const map = getSermonMap();
+  const arr = map[CURRENT.paraId] || [];
+  arr.splice(idx,1);
+  map[CURRENT.paraId] = arr;
+  setSermonMap(map);
+  renderSermonList();
   const map = getSermonMap(); const arr = map[CURRENT.paraId] || [];
   arr.splice(idx,1); map[CURRENT.paraId] = arr; setSermonMap(map); renderSermonList();
 }
-el('cancelEdit').onclick = ()=> { sermonEditor.style.display='none'; renderSermonList(); };
+el('cancelEdit').onclick = ()=> { sermonEditor.style.display='none'; renderSermonList(); stopEditorSpeak(true); };
 el('saveSermon').onclick = ()=> {
   const title = sermonTitle.value.trim() || '(제목 없음)';
   const body = sermonBody.value.trim();
   const imgs = [...sermonThumbs.querySelectorAll('img')].map(img=>img.src);
+  const now = new Date();
+  const date = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+
+  const map = getSermonMap();
+  const arr = map[CURRENT.paraId] || [];
   const now = new Date(); const date = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
   const map = getSermonMap(); const arr = map[CURRENT.paraId] || [];
   const editing = sermonEditor.dataset.editing;
-  if(editing!==''){ const i=+editing; if(arr[i]) arr[i] = {...arr[i], title, body, images:imgs, date}; }
+  if(editing!==''){
+    const i = parseInt(editing,10);
+    if(arr[i]){ arr[i] = {...arr[i], title, body, images:imgs, date}; }
+  } else {
+    arr.unshift({ id: crypto.randomUUID(), title, body, images: imgs, date });
+  }
+  if(editing!==''){ const i = +editing; if(arr[i]) arr[i] = {...arr[i], title, body, images:imgs, date}; }
   else { arr.unshift({ id: crypto.randomUUID(), title, body, images: imgs, date }); }
   map[CURRENT.paraId] = arr; setSermonMap(map);
-  sermonEditor.style.display = 'none'; renderSermonList(); status('설교가 저장되었습니다.');
+  sermonEditor.style.display = 'none';
+  renderSermonList();
+  status('설교가 저장되었습니다.');
+  stopEditorSpeak(true);
+  sermonEditor.style.display = 'none'; renderSermonList(); status('설교가 저장되었습니다.'); stopEditorSpeak(true);
 };
+sermonImages.addEventListener('change', async ()=>{
+  const files = [...sermonImages.files||[]];
+  for(const f of files){
+    const data = await fileToDataURL(f);
+    const img = new Image(); img.src = data; sermonThumbs.appendChild(img);
+  }
+  for(const f of files){ const data = await fileToDataURL(f); const img = new Image(); img.src = data; sermonThumbs.appendChild(img); }
+  sermonImages.value = '';
+});
 
-/* ===== Utils & Keyboard ===== */
+/* ========= Sermon Editor TTS (uses selected voice) ========= */
+/* ====== Sermon editor TTS (uses same voice choice) ====== */
+editorSpeakBtn.onclick = ()=> toggleEditorSpeak();
+function toggleEditorSpeak(){
+  if(!EDITOR_READER.synth) return alert('이 브라우저는 음성합성을 지원하지 않습니다.');
+  if(EDITOR_READER.playing){ stopEditorSpeak(); return; }
+
+  const title = sermonTitle.value.trim();
+  const body  = sermonBody.value.trim();
+  const text = [title, body].filter(Boolean).join('. ');
+  const text = [sermonTitle.value.trim(), sermonBody.value.trim()].filter(Boolean).join('. ');
+  if(!text){ alert('낭독할 내용이 없습니다.'); return; }
+
+  const u = new SpeechSynthesisUtterance(text.replace(/\n{2,}/g, '. ').replace(/\n/g, ' '));
+  const v = getSelectedVoice();
+  if(v){ u.voice = v; u.lang = v.lang; } else { u.lang = 'ko-KR'; }
+  u.rate = 0.96; u.pitch = 1.0;
+  u.onend = ()=> stopEditorSpeak(true);
+  EDITOR_READER.u = u;
+  EDITOR_READER.synth.cancel();
+  EDITOR_READER.synth.speak(u);
+  EDITOR_READER.playing = true;
+  editorSpeakBtn.textContent = '중지';
+  const u = new SpeechSynthesisUtterance(text.replace(/\n{2,}/g, '. ').replace(/\n/g,' '));
+  applyVoice(u); u.onend = ()=> stopEditorSpeak(true);
+  EDITOR_READER.u = u; EDITOR_READER.synth.cancel(); EDITOR_READER.synth.speak(u);
+  EDITOR_READER.playing = true; editorSpeakBtn.textContent = '중지';
+}
+function stopEditorSpeak(silent){
+  if(EDITOR_READER.synth){ try{ EDITOR_READER.synth.cancel(); }catch(e){} }
+  EDITOR_READER.playing = false; EDITOR_READER.u = null;
+  if(!silent) status('설교 낭독을 중지했습니다.');
+  editorSpeakBtn.textContent = '낭독';
+  if(!silent) status('설교 낭독을 중지했습니다.'); editorSpeakBtn.textContent = '낭독';
+}
+
+/* ========= Utils ========= */
+/* ====== Utils ====== */
 function status(msg){ statusEl.textContent = msg; }
 function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+function fileToDataURL(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=> resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+function fileToDataURL(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); }); }
 
 window.addEventListener('keydown', (e)=>{
   if(e.target && ['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return;
@@ -737,12 +645,11 @@ window.addEventListener('keydown', (e)=>{
     const openPara = treeEl.querySelector('details.para[open]');
     if(openPara && CURRENT.book!=null){
       const btn = openPara.querySelector('.speakBtn');
-      startReading(CURRENT.book, CURRENT.chap, CURRENT.paraIdx, openPara, btn);
+      toggleSpeakInline(CURRENT.book, CURRENT.chap, CURRENT.paraIdx, openPara, btn);
     }
   }
   if(e.key.toLowerCase()==='n'){ e.preventDefault();
-    if(TTS.mode==='webspeech'){ stopWS(); } else { stopEXT(); }
-    goToNextParagraph(CURRENT.book, CURRENT.chap, CURRENT.paraIdx, TTS.mode==='webspeech'?'ws':'ext');
+    if(CURRENT.book!=null){ READER.playing=false; if(READER.synth) READER.synth.cancel(); goToNextParagraphInline(CURRENT.book, CURRENT.chap, CURRENT.paraIdx); }
   }
 });
 </script>
