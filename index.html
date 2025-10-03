@@ -49,7 +49,7 @@
     .modal{ width:min(1200px, 96vw); max-height:94vh; overflow:auto; background:var(--panel); border:1px solid var(--border); border-radius:14px }
     .modal .head{ position:sticky; top:0; background:var(--panel); padding:12px 14px; display:flex; gap:10px; align-items:center; border-bottom:1px solid var(--border) }
     .list{ padding:12px 14px; display:grid; gap:6px }
-    .item{ border:1px solid var(--border); border-radius:10px; padding:8px 10px; display:flex; justify-content:space-between; align-items:center; gap:8px }
+    .item{ border:1px solid var(--border); border-radius:10px; padding:6px 10px; display:flex; justify-content:space-between; align-items:center; gap:8px }
     .item-title{
        font-weight:700;
        color: var(--titleBlue); /* 설교 제목 파랑 */
@@ -75,6 +75,7 @@
     :root{
       --editorBg: #0f1115;   /* 어두운 배경 */
       --editorText: #e6e8ef; /* 밝은 글자색 */
+      --titleBlue:#2563eb; /* 진한 파랑 */
     }
 
     .modal { background: var(--panel); }
@@ -92,6 +93,8 @@
       color: #e6e8ef;        /* 밝은 글자 */
       border-color: #2a3040; /* 다크 경계선 */
     }
+
+    .ptitle { color: #2563eb; } /* 진한 파랑 */
 
   </style>
 </head>
