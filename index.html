@@ -133,7 +133,10 @@
       <div class="list" id="sermonList"></div>
       <div class="editor" id="sermonEditor" style="display:none">
         <input type="text" id="sermonTitle" placeholder="설교 제목" />
-        <textarea id="sermonBody" placeholder="설교 본문(텍스트)"></textarea>
+        <!-- 변경 후 -->
+        <div id="sermonBody" class="rte" contenteditable="true" data-placeholder="여기에 붙여넣기 (Notion 서식 유지)">
+        </div>
+
         <div class="editor-bar">
           <input type="file" id="sermonImages" accept="image/*" multiple />
           <div class="grow"></div>
@@ -569,7 +572,7 @@ function openSingleDocEditor(kind){
 
   // 에디터 채우기
   sermonTitle.value = doc.title || '';
-  sermonBody.value  = doc.body  || '';
+  sermonBody.innerHTML  = doc.body  || '';
   sermonThumbs.innerHTML = '';
   (doc.images||[]).forEach(src=>{ const img=new Image(); img.src=src; sermonThumbs.appendChild(img); });
 
@@ -611,14 +614,14 @@ el('newSermonBtn').onclick = ()=> startNewSermon();
 function startNewSermon(){
   sermonList.innerHTML = `<div class="muted" style="padding:0 14px">새 설교를 작성해 저장하면 이 단락에 붙습니다.</div>`;
   sermonEditor.style.display = '';
-  sermonTitle.value = ''; sermonBody.value = ''; sermonThumbs.innerHTML = ''; sermonImages.value = '';
+  sermonTitle.value = ''; sermonBody.innerHTML = ''; sermonThumbs.innerHTML = ''; sermonImages.value = '';
   sermonEditor.dataset.editing = '';
   stopEditorSpeak(true);
 }
 function editSermon(idx){
   const map = getSermonMap(); const arr = map[CURRENT.paraId] || []; const it = arr[idx]; if(!it) return;
   sermonEditor.style.display = ''; sermonEditor.dataset.editing = String(idx);
-  sermonTitle.value = it.title||''; sermonBody.value = it.body||''; sermonThumbs.innerHTML = '';
+  sermonTitle.value = it.title||''; sermonBody.innerHTML = it.body||''; sermonThumbs.innerHTML = '';
   (it.images||[]).forEach(src=>{ const img=new Image(); img.src=src; sermonThumbs.appendChild(img); });
   stopEditorSpeak(true);
 }
@@ -643,7 +646,7 @@ el('cancelEdit').onclick = ()=> {
  
 el('saveSermon').onclick = ()=> {
   const title = sermonTitle.value.trim() || '(제목 없음)';
-  const body  = sermonBody.value.trim();
+  const body  = sermonBody.innerHTML.trim();
   const imgs  = [...sermonThumbs.querySelectorAll('img')].map(img=>img.src);
   const now   = new Date(); 
   const date  = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
@@ -698,7 +701,7 @@ editorSpeakBtn.onclick = ()=> toggleEditorSpeak();
 function toggleEditorSpeak(){
   if(!EDITOR_READER.synth) return alert('이 브라우저는 음성합성을 지원하지 않습니다.');
   if(EDITOR_READER.playing){ stopEditorSpeak(); return; }
-  const text = [sermonTitle.value.trim(), sermonBody.value.trim()].filter(Boolean).join('. ');
+  const text = [sermonTitle.value.trim(), sermonBody.innerHTML.trim()].filter(Boolean).join('. ');
   if(!text){ alert('낭독할 내용이 없습니다.'); return; }
   const u = new SpeechSynthesisUtterance(text.replace(/\n{2,}/g, '. ').replace(/\n/g,' '));
   applyVoice(u); u.onend = ()=> stopEditorSpeak(true);
@@ -740,6 +743,23 @@ function setDocMap(storageKey, obj){
   localStorage.setItem(storageKey, JSON.stringify(obj));
 }
 
+/* Rich Text Editor */
+.rte{
+  min-height:360px; padding:12px; border:1px solid var(--border);
+  border-radius:10px; background: color-mix(in hsl, var(--panel) 88%, black 6%);
+  color: var(--text); line-height:1.6; overflow:auto;
+}
+.rte:focus{ outline: 2px solid color-mix(in hsl, var(--accent) 40%, transparent); }
+.rte:empty:before{
+  content: attr(data-placeholder);
+  color: var(--muted);
+}
+.rte h1,.rte h2,.rte h3{ margin: .6em 0 .4em }
+.rte p{ margin:.3em 0 }
+.rte ul, .rte ol{ padding-left: 1.4em }
+.rte a{ color: var(--accent); text-decoration: underline }
+.rte code{ background: rgba(255,255,255,.08); padding:.1em .3em; border-radius:.3em }
+  
 </script>
 </body>
 </html>
