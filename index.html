@@ -99,10 +99,15 @@
     .ptitle { color: #2563eb; } /* 진한 파랑 */
     
     /* 책 이름(창세기~요한계시록) = 밝은 주황 */
-    #tree > details > summary .tw{
-      color: var(--bookOrange);
+    #tree > details > summary .tw,  /* 창세기~요한계시록 책 이름 */
+    .ptitle,                        /* 단락 명칭 */
+    .item-title {                   /* 설교 목록의 제목 */
+      color: var(--titleBlue) !important;
     }
-
+    /* (선택) 제목 옆 날짜는 옅게 유지 */
+    .item-title .date{
+      color: var(--muted);
+    }
     /* 단락 명칭(문단 제목) = 밝은 노랑 */
     .ptitle{ color: var(--paraYellow) !important; }
 
