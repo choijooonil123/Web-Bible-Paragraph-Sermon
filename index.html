@@ -168,7 +168,9 @@
     function startInlineTitleEdit(el, book, chap, idx){
       const old = el.textContent.trim();
     
-      el.setAttribute('contenteditable','true');
+      el.setAttribute('contenteditable','plaintext-only'); // 지원 브라우저에서 서식 없는 편집
+      el.spellcheck = false;                                // 원치 않는 맞춤법/자동수정 방지
+
       el.classList.add('editing');
       el.focus();
     
@@ -440,16 +442,27 @@
 
             const titleEl = sum.querySelector('.ptitle');
 
-            // 더블클릭 → 인라인 편집 시작
+            const titleEl = sum.querySelector('.ptitle');
+            
+            // 1) 더블클릭 → summary 토글 막고 편집 시작
             titleEl.addEventListener('dblclick', (e)=>{
-              e.stopPropagation(); // summary 토글 방지
+              e.preventDefault();
+              e.stopPropagation();       // 더블클릭이 summary 토글로 소비되지 않도록
+              detPara.open = true;       // 혹시 닫히려 하면 강제로 열어둠
               startInlineTitleEdit(titleEl, bookName, ch, idx);
             });
             
-            // 편집 중에는 summary 열림/닫힘 방지
-            sum.addEventListener('mousedown', (e)=>{
-              if (titleEl.isContentEditable) e.stopPropagation();
-            });
+            // 2) 편집 중(혹은 제목 클릭 시) summary가 열리고 닫히는 기본동작을 차단
+            function blockIfEditingOrTargetTitle(ev){
+              if (titleEl.isContentEditable || ev.target === titleEl){
+                ev.preventDefault();
+                ev.stopPropagation();
+              }
+            }
+            // 캡처 단계에서 걸러 summary 토글 방지
+            sum.addEventListener('mousedown', blockIfEditingOrTargetTitle, true);
+            sum.addEventListener('click',     blockIfEditingOrTargetTitle, true);
+            sum.addEventListener('dblclick',  blockIfEditingOrTargetTitle, true);
 
             detPara.appendChild(sum);
 
