@@ -442,33 +442,39 @@
 
             const titleEl = sum.querySelector('.ptitle');
             
-            // ① 제목에서 발생한 이벤트는 summary 토글로 가지 않도록 전부 차단
-            ['pointerdown','mousedown','click','dblclick'].forEach(type=>{
-              titleEl.addEventListener(type, (e)=>{
-                e.preventDefault();
-                e.stopPropagation();
-              }, true); // 캡처 단계에서 먼저 가로채기
-            });
+            // --- 단락 타이틀 클릭/더블클릭 제어 ---
             
-            // ② 더블클릭 시 강제로 열어두고 인라인 편집 시작
+            // A) 더블클릭 → summary 토글 막고 인라인 편집 시작
             titleEl.addEventListener('dblclick', (e)=>{
-              // 위의 차단 핸들러가 처리하지만 안전하게 한 번 더
               e.preventDefault();
               e.stopPropagation();
-              detPara.open = true; // 닫히려는 기본동작을 무력화
+              detPara.open = true; // 혹시 닫히려는 기본동작 방지
               startInlineTitleEdit(titleEl, bookName, ch, idx);
+            }, true); // 캡처 단계에서 선처리
+            
+            // B) 타이틀을 클릭했을 때: "편집 중"일 때만 토글 차단
+            ['pointerdown','mousedown','click'].forEach(type=>{
+              titleEl.addEventListener(type, (e)=>{
+                if (titleEl.isContentEditable) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }
+              }, true);
             });
             
-            // ③ 혹시 모를 버블링/다른 노드 클릭 대비: summary 레벨에서도 가드
+            // C) summary 레벨 가드: 편집 중이거나, 타이틀에 대한 "더블클릭"인 경우만 차단
             function guardSummary(ev){
-              if (titleEl.isContentEditable || ev.target === titleEl){
+              const isEditing = titleEl.isContentEditable;
+              const dblOnTitle = (ev.type === 'dblclick' && ev.target === titleEl);
+              if (isEditing || dblOnTitle){
                 ev.preventDefault();
                 ev.stopPropagation();
               }
             }
             ['pointerdown','mousedown','click','dblclick'].forEach(type=>{
-              sum.addEventListener(type, guardSummary, true); // 캡처 단계
+              sum.addEventListener(type, guardSummary, true);
             });
+
 
             // 2) 편집 중(혹은 제목 클릭 시) summary가 열리고 닫히는 기본동작을 차단
             function blockIfEditingOrTargetTitle(ev){
