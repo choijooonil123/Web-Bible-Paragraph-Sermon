@@ -94,6 +94,10 @@
     <h1>Web Bible – Paragraph Sermon</h1>
 
     <div class="pill">
+      <button id="btnSaveJSON">JSON 저장</button>
+    </div>
+    
+    <div class="pill">
       <span class="muted">음성</span>
       <select id="voiceSelect" title="한국어 보이스 선택">
         <option value="">브라우저 기본(ko-KR)</option>
@@ -160,6 +164,97 @@
     function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
     function fileToDataURL(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); }); }
 
+    // ==== 인라인 제목 편집 ====
+    function startInlineTitleEdit(el, book, chap, idx){
+      const old = el.textContent.trim();
+    
+      el.setAttribute('contenteditable','true');
+      el.classList.add('editing');
+      el.focus();
+    
+      // 전체 선택
+      const sel = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    
+      function finish(commit){
+        el.removeAttribute('contenteditable');
+        el.classList.remove('editing');
+        document.removeEventListener('keydown', onKey, true);
+        el.removeEventListener('blur', onBlur);
+    
+        if(commit){
+          const newTitle = el.textContent.trim() || '(제목 없음)';
+          updateParaTitle(book, chap, idx, newTitle); // 메모리 갱신
+          status('단락 제목이 변경되었습니다. (Ctrl+Shift+S로 JSON 저장 가능)');
+        }else{
+          el.textContent = old; // 취소 시 원복
+          status('제목 편집이 취소되었습니다.');
+        }
+      }
+      function onKey(e){
+        if(e.key === 'Enter'){ e.preventDefault(); finish(true); }
+        if(e.key === 'Escape'){ e.preventDefault(); finish(false); }
+      }
+      function onBlur(){ finish(true); }
+    
+      document.addEventListener('keydown', onKey, true);
+      el.addEventListener('blur', onBlur);
+    }
+    
+    // 메모리(BIBLE) 데이터 갱신
+    function updateParaTitle(book, chap, idx, newTitle){
+      try{
+        const para = BIBLE?.books?.[book]?.[chap]?.paras?.[idx];
+        if(!para) return;
+        para.title = newTitle;
+    
+        // 이미 열린 summary도 안전하게 갱신
+        const s = document.querySelector(
+          `summary .ptitle[data-book="${CSS.escape(String(book))}"][data-ch="${CSS.escape(String(ch))}"][data-idx="${CSS.escape(String(idx))}"]`
+        );
+        if(s) s.textContent = newTitle;
+      }catch(_){}
+    }
+    
+    // ==== JSON 내보내기(다운로드) ====
+    function downloadBibleJSON(){
+      if(!BIBLE){ alert('BIBLE 데이터가 없습니다.'); return; }
+      const blob = new Blob([JSON.stringify(BIBLE, null, 2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'bible-paragraphs.json'; // 통일된 이름으로 저장
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 0);
+      status('수정된 JSON을 다운로드했습니다.');
+    }
+    
+    /* (선택) 파일 저장 다이얼로그로 직접 저장 - Chromium 계열 브라우저에서만
+    let BIBLE_FILE_HANDLE = null;
+    async function saveBibleJSONWithPicker(){
+      if(!BIBLE){ alert('BIBLE 데이터가 없습니다.'); return; }
+      try{
+        if(!BIBLE_FILE_HANDLE){
+          BIBLE_FILE_HANDLE = await window.showSaveFilePicker({
+            suggestedName: 'bible-paragraphs.json',
+            types: [{ description: 'JSON', accept: {'application/json':['.json']} }]
+          });
+        }
+        const wr = await BIBLE_FILE_HANDLE.createWritable();
+        await wr.write(new Blob([JSON.stringify(BIBLE, null, 2)], {type:'application/json'}));
+        await wr.close();
+        status('로컬 파일로 저장 완료 (File System Access API)');
+      }catch(e){
+        console.warn(e);
+        alert('파일 저장이 취소되었거나 브라우저가 지원하지 않습니다.\n대안: JSON 다운로드 버튼을 사용하세요.');
+      }
+    }
+    */
+
+    
     /* --------- Refs / Keys --------- */
     const treeEl = el('tree'), statusEl = el('status');
     const voiceSelect = el('voiceSelect'), testVoiceBtn = el('testVoice');
@@ -195,6 +290,17 @@
       status('불러오기 완료. 66권 트리가 활성화되었습니다.');
       await setupVoices();
     })();
+
+    })();   // ← boot() IIFE 끝
+    
+    // JSON 저장 버튼 핸들러 연결 (버튼이 있는 경우에만)
+    (function bindSaveButton(){
+      const btnSaveJSON = document.getElementById('btnSaveJSON');
+      if (btnSaveJSON) {
+        btnSaveJSON.addEventListener('click', downloadBibleJSON);
+      }
+    })();
+    
     async function tryFetchJSON(path){ const res = await fetch(path, {cache:'no-store'}); if(!res.ok) throw 0; return await res.json(); }
 
     /* --------- Voice --------- */
@@ -325,7 +431,28 @@
             const titleText = p.title || p.ref;
 
             const sum = document.createElement('summary');
-            sum.innerHTML = `<span class="vrange">(${v1}-${v2})</span> <span class="ptitle">${escapeHtml(titleText)}</span>`;
+            sum.innerHTML = `
+              <span class="vrange">(${v1}-${v2})</span>
+              <span class="ptitle"
+                    data-book="${bookName}"
+                    data-ch="${ch}"
+                    data-idx="${idx}"
+                    title="제목을 더블클릭하면 편집할 수 있습니다">${escapeHtml(titleText)}</span>
+            `;
+
+            const titleEl = sum.querySelector('.ptitle');
+
+            // 더블클릭 → 인라인 편집 시작
+            titleEl.addEventListener('dblclick', (e)=>{
+              e.stopPropagation(); // summary 토글 방지
+              startInlineTitleEdit(titleEl, bookName, ch, idx);
+            });
+            
+            // 편집 중에는 summary 열림/닫힘 방지
+            sum.addEventListener('mousedown', (e)=>{
+              if (titleEl.isContentEditable) e.stopPropagation();
+            });
+
             detPara.appendChild(sum);
 
             const body = document.createElement('div');
@@ -700,6 +827,14 @@
       }
     });
 
+    // Ctrl+Shift+S → 현재 메모리 BIBLE을 JSON으로 다운로드
+    window.addEventListener('keydown', (e)=>{
+      if(e.ctrlKey && e.shiftKey && e.key.toLowerCase()==='s'){
+        e.preventDefault();
+        downloadBibleJSON();
+      }
+    });
+        
     function getDocMap(storageKey){ try{ return JSON.parse(localStorage.getItem(storageKey)||'{}'); }catch{ return {}; } }
     function setDocMap(storageKey, obj){ localStorage.setItem(storageKey, JSON.stringify(obj)); }
 
