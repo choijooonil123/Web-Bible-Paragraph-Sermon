@@ -445,22 +445,13 @@
             // --- 단락 타이틀 클릭/더블클릭 제어 ---
             
             // A) 더블클릭 → summary 토글 막고 인라인 편집 시작
+            // A) 더블클릭 → summary 토글 막고 인라인 편집 시작
             titleEl.addEventListener('dblclick', (e)=>{
               e.preventDefault();
               e.stopPropagation();
-              detPara.open = true; // 혹시 닫히려는 기본동작 방지
+              detPara.open = true; // 닫히려는 기본동작 방지
               startInlineTitleEdit(titleEl, bookName, ch, idx);
-            }, true); // 캡처 단계에서 선처리
-            
-            // B) 타이틀을 클릭했을 때: "편집 중"일 때만 토글 차단
-            ['pointerdown','mousedown','click'].forEach(type=>{
-              titleEl.addEventListener(type, (e)=>{
-                if (titleEl.isContentEditable) {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }
-              }, true);
-            });
+            }, true);
             
             // C) summary 레벨 가드: 편집 중이거나, 타이틀에 대한 "더블클릭"인 경우만 차단
             function guardSummary(ev){
@@ -476,18 +467,8 @@
             });
 
 
-            // 2) 편집 중(혹은 제목 클릭 시) summary가 열리고 닫히는 기본동작을 차단
-            function blockIfEditingOrTargetTitle(ev){
-              if (titleEl.isContentEditable || ev.target === titleEl){
-                ev.preventDefault();
-                ev.stopPropagation();
-              }
-            }
-            // 캡처 단계에서 걸러 summary 토글 방지
-            sum.addEventListener('mousedown', blockIfEditingOrTargetTitle, true);
-            sum.addEventListener('click',     blockIfEditingOrTargetTitle, true);
-            sum.addEventListener('dblclick',  blockIfEditingOrTargetTitle, true);
 
+            // 2) 편집 중(혹은 제목 클릭 시) summary가 열리고 닫히는 기본동작을 차단
             detPara.appendChild(sum);
 
             const body = document.createElement('div');
