@@ -601,7 +601,7 @@ function goToNextParagraphInline(book, chap, idx){
 
   const chaptersEls = bookEl.querySelectorAll(':scope > .chapters > details');
   const chapNums = Object.keys(BIBLE.books[book]).map(n=>parseInt(n,10)).sort((a,b)=>a-b);
-  const chPos = chapNums.indexOf(ch);
+  const chPos = chapNums.indexOf(chap);
   const chapEl = chaptersEls[chPos]; if(!chapEl){
     console.log('[NEXT] no chapEl  → CURRENT:', {book: CURRENT.book, chap: CURRENT.chap, paraIdx: CURRENT.paraIdx});
     return false;
