@@ -587,62 +587,80 @@
     }
     function updateInlineSpeakBtn(){ if(READER.btn) READER.btn.textContent = READER.playing ? '중지' : '낭독'; }
 
-    function goToNextParagraphInline(book, chap, idx){
-      const chObj = BIBLE.books[book][chap];
+function goToNextParagraphInline(book, chap, idx){
+  console.log('[NEXT] enter  → CURRENT:', {book: CURRENT.book, chap: CURRENT.chap, paraIdx: CURRENT.paraIdx});
 
-      const booksEls = [...treeEl.children];
-      const bIdx = Object.keys(BIBLE.books).indexOf(book);
-      const bookEl = booksEls[bIdx]; if(!bookEl) return false;
+  const chObj = BIBLE.books[book][chap];
 
-      const chaptersEls = bookEl.querySelectorAll(':scope > .chapters > details');
-      const chapNums = Object.keys(BIBLE.books[book]).map(n=>parseInt(n,10)).sort((a,b)=>a-b);
-      const chPos = chapNums.indexOf(ch);
-      const chapEl = chaptersEls[chPos]; if(!chapEl) return false;
+  const booksEls = [...treeEl.children];
+  const bIdx = Object.keys(BIBLE.books).indexOf(book);
+  const bookEl = booksEls[bIdx]; if(!bookEl){
+    console.log('[NEXT] no bookEl  → CURRENT:', {book: CURRENT.book, chap: CURRENT.chap, paraIdx: CURRENT.paraIdx});
+    return false;
+  }
 
-      const paraEls = chapEl.querySelectorAll(':scope > .paras > details.para');
+  const chaptersEls = bookEl.querySelectorAll(':scope > .chapters > details');
+  const chapNums = Object.keys(BIBLE.books[book]).map(n=>parseInt(n,10)).sort((a,b)=>a-b);
+  const chPos = chapNums.indexOf(ch);
+  const chapEl = chaptersEls[chPos]; if(!chapEl){
+    console.log('[NEXT] no chapEl  → CURRENT:', {book: CURRENT.book, chap: CURRENT.chap, paraIdx: CURRENT.paraIdx});
+    return false;
+  }
 
-      if(idx < chObj.paras.length-1){
-        const nextEl = paraEls[idx+1];
-        if(nextEl){
-          chapEl.open = true; nextEl.open = true;
-          CURRENT.book = book; CURRENT.chap = chap; CURRENT.paraIdx = idx+1;
-          READER.scope = nextEl; READER.btn = nextEl.querySelector('.speakBtn');
-          return true;
-        }
-      }
-      if(chPos >= 0 && chPos < chapNums.length-1){
-        const nextChap = chapNums[chPos+1];
-        const nextChapEl = chaptersEls[chPos+1];
-        if(nextChapEl){
-          const nextParas = BIBLE.books[book][nextChap].paras||[];
-          if(nextParas.length){
-            const nextParaEl = nextChapEl.querySelector(':scope > .paras > details.para');
-            nextChapEl.open = true; if(nextParaEl) nextParaEl.open = true;
-            CURRENT.book = book; CURRENT.chap = nextChap; CURRENT.paraIdx = 0;
-            READER.scope = nextParaEl; READER.btn = nextParaEl?.querySelector('.speakBtn') || null;
-            return true;
-          }
-        }
-      }
-      const bookNames = Object.keys(BIBLE.books);
-      const bPos = bookNames.indexOf(book);
-      if(bPos >= 0 && bPos < bookNames.length-1){
-        const nextBook = bookNames[bPos+1];
-        const nextBookEl = booksEls[bPos+1];
-        if(nextBookEl){
-          const firstChap = Math.min(...Object.keys(BIBLE.books[nextBook]).map(n=>parseInt(n,10)));
-          const nextChapEl = nextBookEl.querySelector(':scope > .chapters > details');
-          const nextParaEl = nextChapEl?.querySelector(':scope > .paras > details.para');
-          if(nextParaEl){
-            nextBookEl.open = true; nextChapEl.open = true; nextParaEl.open = true;
-            CURRENT.book = nextBook; CURRENT.chap = firstChap; CURRENT.paraIdx = 0;
-            READER.scope = nextParaEl; READER.btn = nextParaEl.querySelector('.speakBtn');
-            return true;
-          }
-        }
-      }
-      return false;
+  const paraEls = chapEl.querySelectorAll(':scope > .paras > details.para');
+
+  // 같은 장의 다음 단락
+  if(idx < chObj.paras.length-1){
+    const nextEl = paraEls[idx+1];
+    if(nextEl){
+      chapEl.open = true; nextEl.open = true;
+      CURRENT.book = book; CURRENT.chap = chap; CURRENT.paraIdx = idx+1;
+      READER.scope = nextEl; READER.btn = nextEl.querySelector('.speakBtn');
+      console.log('[NEXT] same chapter → CURRENT:', {book: CURRENT.book, chap: CURRENT.chap, paraIdx: CURRENT.paraIdx});
+      return true;
     }
+  }
+
+  // 다음 장 첫 단락
+  if(chPos >= 0 && chPos < chapNums.length-1){
+    const nextChap = chapNums[chPos+1];
+    const nextChapEl = chaptersEls[chPos+1];
+    if(nextChapEl){
+      const nextParas = BIBLE.books[book][nextChap].paras||[];
+      if(nextParas.length){
+        const nextParaEl = nextChapEl.querySelector(':scope > .paras > details.para');
+        nextChapEl.open = true; if(nextParaEl) nextParaEl.open = true;
+        CURRENT.book = book; CURRENT.chap = nextChap; CURRENT.paraIdx = 0;
+        READER.scope = nextParaEl; READER.btn = nextParaEl?.querySelector('.speakBtn') || null;
+        console.log('[NEXT] next chapter → CURRENT:', {book: CURRENT.book, chap: CURRENT.chap, paraIdx: CURRENT.paraIdx});
+        return true;
+      }
+    }
+  }
+
+  // 다음 책 첫 장 첫 단락
+  const bookNames = Object.keys(BIBLE.books);
+  const bPos = bookNames.indexOf(book);
+  if(bPos >= 0 && bPos < bookNames.length-1){
+    const nextBook = bookNames[bPos+1];
+    const nextBookEl = booksEls[bPos+1];
+    if(nextBookEl){
+      const firstChap = Math.min(...Object.keys(BIBLE.books[nextBook]).map(n=>parseInt(n,10)));
+      const nextChapEl = nextBookEl.querySelector(':scope > .chapters > details');
+      const nextParaEl = nextChapEl?.querySelector(':scope > .paras > details.para');
+      if(nextParaEl){
+        nextBookEl.open = true; nextChapEl.open = true; nextParaEl.open = true;
+        CURRENT.book = nextBook; CURRENT.chap = firstChap; CURRENT.paraIdx = 0;
+        READER.scope = nextParaEl; READER.btn = nextParaEl.querySelector('.speakBtn');
+        console.log('[NEXT] next book → CURRENT:', {book: CURRENT.book, chap: CURRENT.chap, paraIdx: CURRENT.paraIdx});
+        return true;
+      }
+    }
+  }
+
+  console.log('[NEXT] no next paragraph → CURRENT:', {book: CURRENT.book, chap: CURRENT.chap, paraIdx: CURRENT.paraIdx});
+  return false;
+}
 
     /* --------- Sermon / Context Editors --------- */
     function getSermonMap(){ try{ return JSON.parse(localStorage.getItem(STORAGE_SERMON)||'{}'); }catch{ return {}; } }
