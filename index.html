@@ -1,54 +1,29 @@
 <!DOCTYPE html>
-<html lang="ko" data-theme="dark">
+<html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Web Bible Paragraph 3.0</title>
+  <title>Web Bible Paragraph - 본문삽입 전용</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
-    <div class="brand">Web-Bible-Paragraph <span class="ver">v3.0.0-alpha</span></div>
+    <div class="brand">Web-Bible-Paragraph</div>
     <div class="spacer"></div>
-    <div class="toolbar">
-      <button id="btnImport" title="설교 불러오기(JSON)">불러오기</button>
-      <button id="btnExport" title="설교 내보내기(JSON)">내보내기</button>
-      <button id="btnClear"  title="로컬 저장 초기화">초기화</button>
-      <div class="divider"></div>
-      <button id="btnTrace"  title="설교추적 시작/중지">설교추적시작</button>
-      <button id="btnTTS"    title="낭독/정지 토글">낭독</button>
-    </div>
+    <button id="btnInsert">본문삽입</button>
   </header>
 
   <main>
-    <aside id="left">
-      <div class="panel head">
-        <div class="row">
-          <input id="refInput" placeholder="예: 창 1:1-3,6-8; 2:1" />
-          <button id="btnInsert">본문삽입</button>
-        </div>
-        <div class="row tiny">
-          <label><input type="checkbox" id="chkShowNum" checked> 절 번호 표시</label>
-          <label class="ml8">버전:
-            <select id="verTabs">
-              <option value="krv" selected>개역개정</option>
-              <option value="rnr">새번역</option>
-            </select>
-          </label>
-        </div>
-      </div>
-      <div id="tree" class="panel tree"></div>
-      <div id="status" class="status"></div>
-    </aside>
-
     <section id="editor">
-      <div class="panel head"><div>에디터 (자동저장됨)</div></div>
+      <div class="panel head">
+        <input id="refInput" placeholder="예: 창 1:1-3,6-8; 2:1" />
+      </div>
       <div id="doc" class="editor" contenteditable="true" spellcheck="false"></div>
     </section>
   </main>
 
   <footer>
-    <small>© 2025 Web-Bible-Paragraph 3.0 — MVP</small>
+    <small>© 2025 Web-Bible-Paragraph Minimal</small>
   </footer>
 
   <script src="app.js"></script>
