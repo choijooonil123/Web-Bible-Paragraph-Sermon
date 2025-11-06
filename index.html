@@ -21,19 +21,9 @@
     </div>
   </header>
 
-  <main>
-    <aside id="left">
-      <!-- 👇 본문삽입 관련 입력/옵션 패널 제거됨 -->
-      <div id="tree" class="panel tree"></div>
-      <div id="status" class="status"></div>
-    </aside>
-
-    <section id="editor">
-      <div class="panel head">
-        <div>에디터 (자동저장됨)</div>
-      </div>
-      <div id="doc" class="editor" contenteditable="true" spellcheck="false"></div>
-    </section>
+  <!-- ✅ 좌측 패널 및 '에디터 (자동저장됨)' 제거, 에디터만 남김 -->
+  <main style="padding:0 8px;">
+    <div id="doc" class="editor" contenteditable="true" spellcheck="false"></div>
   </main>
 
   <footer>
