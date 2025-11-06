@@ -1,7 +1,8 @@
 /* --------- Utils --------- */
 const el = (id) => document.getElementById(id);
-const treeEl = el('tree'), statusEl = el('status'), docEl = el('doc');
-// 버전 탭 UI 제거 → 기본값만 사용 (필요 시 Import 데이터에 담긴 ver을 복원)
+const docEl = el('doc');
+const statusEl = el('status');           // 없어도 OK (status()에서 가드)
+const treeEl = el('tree');               // 없어도 OK (buildTree()에서 가드)
 const VER_KEY = 'wbp.ver';
 const LS_KEY = 'wbp.v3.doc';
 
@@ -15,41 +16,48 @@ let CURRENT = { tracing:false, tts:false };
 
 /* --------- Init --------- */
 window.addEventListener('DOMContentLoaded', async () => {
-  // 본문 로드 (샘플 JSON)
-  BIBLE = await fetchJson('bible-mini.json');
-  buildTree();
+  try{
+    BIBLE = await fetchJson('bible-mini.json');
+  }catch(e){
+    console.error(e);
+    status('본문 로드 실패: ' + e.message);
+  }
 
-  // 에디터 로드
+  // 좌측 패널이 없는 레이아웃: 트리 생성은 존재할 때만
+  if (treeEl && BIBLE) buildTree();
+
+  // 에디터 로드 & 자동저장
   const saved = localStorage.getItem(LS_KEY);
   docEl.innerHTML = saved || `<p>여기에 본문을 삽입하세요.</p>`;
   docEl.addEventListener('input', debounce(()=>localStorage.setItem(LS_KEY, docEl.innerHTML), 500));
 
   // 버튼 바인딩
-  el('btnInsert').addEventListener('click', onInsertClick);
-  el('btnClear').addEventListener('click', ()=>{
-    localStorage.removeItem(LS_KEY);
-    docEl.innerHTML='';
-    status('로컬 저장소를 비웠습니다.');
-  });
-  el('btnExport').addEventListener('click', onExport);
-  el('btnImport').addEventListener('click', onImport);
-  el('btnTTS').addEventListener('click', toggleTTS);
-  el('btnTrace').addEventListener('click', toggleTrace);
+  bind('#btnInsert', onInsertClick);
+  bind('#btnClear',  onClear);
+  bind('#btnExport', onExport);
+  bind('#btnImport', onImport);
+  bind('#btnTTS',    toggleTTS);
+  bind('#btnTrace',  toggleTrace);
 });
+
+function bind(sel, fn){
+  const b = document.querySelector(sel);
+  if (b) b.addEventListener('click', fn);
+}
 
 async function fetchJson(path){ const r = await fetch(path); return await r.json(); }
 
-/* --------- Tree (샘플) --------- */
+/* --------- (옵션) 트리: 요소 있을 때만 동작 --------- */
 function buildTree(){
-  if(!BIBLE){ status('본문 로드 실패'); return; }
+  if (!treeEl || !BIBLE) return;   // 🔒 가드
   const frag = document.createDocumentFragment();
   const books = Object.keys(BIBLE.books);
   books.forEach(book=>{
-    const bookWrap = document.createElement('details');
-    bookWrap.className = 'para';
+    const wrap = document.createElement('details');
+    wrap.className = 'para';
     const sm = document.createElement('summary');
     sm.innerHTML = `<span class="ptitle" data-book="${book}">${book}</span>`;
-    bookWrap.appendChild(sm);
+    wrap.appendChild(sm);
 
     const chs = BIBLE.books[book];
     chs.forEach(chObj=>{
@@ -57,10 +65,10 @@ function buildTree(){
       d.style.padding = '4px 0 8px 8px';
       const links = chObj.verses.map((v,i)=> i>0 ? `<a class="v" href="#${book}.${chObj.chapter}.${i}">${i}</a>` : '').join('');
       d.innerHTML = `<div><strong>${book} ${chObj.chapter}장</strong> ${links}</div>`;
-      bookWrap.appendChild(d);
+      wrap.appendChild(d);
     });
 
-    frag.appendChild(bookWrap);
+    frag.appendChild(wrap);
   });
   treeEl.innerHTML = '';
   treeEl.appendChild(frag);
@@ -93,23 +101,19 @@ function parseRef(input){
   return result;
 }
 
-/* --------- 본문 조회 --------- */
+/* --------- 본문 조회 (기본: 개역개정) --------- */
 function getVerseText(book, ch, v, ver){
-  const bookArr = BIBLE?.parallel?.[ver]?.[book];
+  const version = ver || localStorage.getItem(VER_KEY) || 'krv';
+  const bookArr = BIBLE?.parallel?.[version]?.[book];
   if(!bookArr) return null;
   const chObj = bookArr.find(x=>x.chapter===ch);
-  const verse = chObj?.verses?.[v];
-  return verse || null;
+  return chObj?.verses?.[v] || null;
 }
 
-/* --------- 본문 삽입 (툴바 버튼 → prompt 입력) --------- */
+/* --------- 본문 삽입 (툴바 버튼 → prompt로 입력) --------- */
 function onInsertClick(){
-  // 입력창 제거에 맞춰 prompt로 참조만 받음
   const ref = window.prompt('삽입할 성구를 입력하세요 (예: 창 1:1-3,6-8; 2:1)');
   if(!ref) return;
-
-  // 버전 탭이 없으므로 저장된 값 또는 기본값 사용
-  const ver = localStorage.getItem(VER_KEY) || 'krv';
 
   const list = parseRef(ref);
   if(!list.length){ status('참조 구문을 인식하지 못했습니다. 예: 창 1:1-3,6-8; 2:1'); return; }
@@ -117,7 +121,7 @@ function onInsertClick(){
   const blocks = [];
   let lastKey='';
   list.forEach(({book,ch,v})=>{
-    const t = getVerseText(book, ch, v, ver);
+    const t = getVerseText(book, ch, v);
     if(!t) return;
     const key = `${book} ${ch}`;
     if(key !== lastKey){
@@ -177,10 +181,13 @@ async function onImport(){
 let currentSpeakNode = null;
 
 function toggleTTS(){
+  const btn = el('btnTTS');
+  if(!btn) return;
+
   if(CURRENT.tts){
     window.speechSynthesis.cancel();
     CURRENT.tts = false;
-    el('btnTTS').textContent = '낭독';
+    btn.textContent = '낭독';
     if(currentSpeakNode) currentSpeakNode.classList.remove('current');
     return;
   }
@@ -191,7 +198,8 @@ function toggleTTS(){
 }
 
 function speakFrom(startEl){
-  CURRENT.tts = true; el('btnTTS').textContent = '정지';
+  CURRENT.tts = true;
+  const btn = el('btnTTS'); if(btn) btn.textContent = '정지';
   const walk = document.createTreeWalker(docEl, NodeFilter.SHOW_ELEMENT, {
     acceptNode(n){ return (n.tagName==='P' || n.tagName==='DIV') && n.textContent.trim()? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP; }
   });
@@ -221,8 +229,9 @@ function speakFrom(startEl){
 
 /* --------- 설교추적 데모 --------- */
 function toggleTrace(){
+  const btn = el('btnTrace');
   CURRENT.tracing = !CURRENT.tracing;
-  el('btnTrace').textContent = CURRENT.tracing? '설교추적중지' : '설교추적시작';
+  if(btn) btn.textContent = CURRENT.tracing? '설교추적중지' : '설교추적시작';
   if(CURRENT.tracing){ demoTrace(); }
 }
 function demoTrace(){
