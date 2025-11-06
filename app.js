@@ -112,4 +112,84 @@ function onInsertClick(){
 function insertHtmlAtCursor(html){
   docEl.focus();
   const sel = window.getSelection();
-  if(!sel || !sel.rangeCount){ docEl.insertAdjacentHTML('beforeend', html); retur
+  if(!sel || !sel.rangeCount){ docEl.insertAdjacentHTML('beforeend', html); return; }
+  const range = sel.getRangeAt(0);
+  const frag = range.createContextualFragment(html);
+  range.deleteContents(); range.insertNode(frag);
+  sel.collapseToEnd();
+}
+
+function onExport(){
+  const data = { html: docEl.innerHTML, ts: Date.now(), ver: el('verTabs').value };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'sermon-data.json';
+  a.click();
+}
+
+async function onImport(){
+  const inp = document.createElement('input');
+  inp.type='file'; inp.accept='.json,application/json';
+  inp.onchange = async () => {
+    const file = inp.files?.[0]; if(!file) return;
+    const text = await file.text();
+    try{
+      const data = JSON.parse(text);
+      if(data?.html){ docEl.innerHTML = data.html; localStorage.setItem(LS_KEY, data.html); }
+      if(data?.ver){ el('verTabs').value = data.ver; localStorage.setItem(VER_KEY, data.ver); }
+      status('불러오기를 완료했습니다.');
+    }catch(e){ status('JSON 파싱 오류: '+e.message); }
+  };
+  inp.click();
+}
+
+let currentSpeakNode = null;
+function toggleTTS(){
+  if(CURRENT.tts){ window.speechSynthesis.cancel(); CURRENT.tts = false; el('btnTTS').textContent = '낭독';
+    if(currentSpeakNode) currentSpeakNode.classList.remove('current'); return; }
+  const sel = window.getSelection();
+  let node = sel?.anchorNode?.parentElement;
+  if(!node || !docEl.contains(node)) node = docEl.firstElementChild;
+  speakFrom(node);
+}
+
+function speakFrom(startEl){
+  CURRENT.tts = true; el('btnTTS').textContent = '정지';
+  const walk = document.createTreeWalker(docEl, NodeFilter.SHOW_ELEMENT, {
+    acceptNode(n){ return (n.tagName==='P' || n.tagName==='DIV') && n.textContent.trim()? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP; }
+  });
+  walk.currentNode = startEl || docEl.firstElementChild;
+  const queue=[]; let n = walk.currentNode; while(n){ queue.push(n); n = walk.nextNode(); }
+  let idx=0;
+  const speakNext = ()=>{
+    if(!CURRENT.tts || idx>=queue.length){ toggleTTS(); return; }
+    const node = queue[idx++]; const text = node.textContent.trim();
+    if(!text){ speakNext(); return; }
+    if(currentSpeakNode) currentSpeakNode.classList.remove('current');
+    currentSpeakNode = node; node.classList.add('current','center-scroll');
+    node.scrollIntoView({block:'center', behavior:'smooth'});
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang='ko-KR';
+    u.onend = ()=>{ if(CURRENT.tts) speakNext(); };
+    u.onerror = ()=>{ if(CURRENT.tts) speakNext(); };
+    window.speechSynthesis.speak(u);
+  };
+  speakNext();
+}
+
+function toggleTrace(){
+  CURRENT.tracing = !CURRENT.tracing;
+  el('btnTrace').textContent = CURRENT.tracing? '설교추적중지' : '설교추적시작';
+  if(CURRENT.tracing) demoTrace();
+}
+function demoTrace(){
+  if(!CURRENT.tracing) return;
+  const nodes = [...docEl.querySelectorAll('p,div')].filter(n=>n.textContent.trim());
+  if(!nodes.length) return;
+  let i = nodes.findIndex(n=>n.classList.contains('current')); if(i<0) i=0; else i=(i+1)%nodes.length;
+  if(currentSpeakNode) currentSpeakNode.classList.remove('current');
+  const node = nodes[i]; node.classList.add('current','center-scroll');
+  node.scrollIntoView({block:'center', behavior:'smooth'});
+  setTimeout(()=>{ if(CURRENT.tracing) demoTrace(); }, 2000);
+}
