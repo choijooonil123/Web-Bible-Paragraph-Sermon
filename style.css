@@ -49,6 +49,7 @@ aside#left, section#editor{display:flex; flex-direction:column; gap:8px}
 .tree a{color:#c6e1ff; text-decoration:none}
 .tree a:hover{text-decoration:underline}
 
+/* NOTE: HTML 클래스가 .status라면 아래처럼 영문으로 써야 합니다 */
 .status{font-size:.85em; color:var(--muted); padding:8px}
 
 .editor{flex:1; padding:16px; overflow:auto; line-height:1.8}
