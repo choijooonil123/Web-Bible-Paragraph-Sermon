@@ -17,19 +17,29 @@ header{
 .ver{font-size:.85em; color:var(--muted)}
 .spacer{flex:1}
 .toolbar{display:flex; gap:8px; align-items:center}
-.toolbar button{background:#1f2533; color:var(--text); border:1px solid var(--border); padding:6px 10px; border-radius:10px; cursor:pointer}
+.toolbar button{
+  background:#1f2533; color:var(--text); border:1px solid var(--border);
+  padding:6px 10px; border-radius:10px; cursor:pointer;
+}
 .toolbar .divider{width:1px; height:24px; background:var(--border); margin:0 2px}
 
 main{display:grid; grid-template-columns:360px 1fr; gap:8px; padding:0 8px}
 aside#left, section#editor{display:flex; flex-direction:column; gap:8px}
+
 .panel{background:var(--panel); border:1px solid var(--border); border-radius:12px}
 .panel.head{padding:10px}
 .panel .row{display:flex; gap:8px; align-items:center}
 .panel .row.tiny{margin-top:6px; font-size:.9em; color:var(--muted)}
 .ml8{margin-left:8px}
 
-#refInput{flex:1; padding:8px 10px; border-radius:10px; border:1px solid var(--border); background:#0e1420; color:var(--text)}
-#btnInsert{padding:8px 12px; border-radius:10px; border:1px solid var(--border); background:#1f2533; color:var(--text); cursor:pointer}
+#refInput{
+  flex:1; padding:8px 10px; border-radius:10px; border:1px solid var(--border);
+  background:#0e1420; color:var(--text);
+}
+#btnInsert{
+  padding:8px 12px; border-radius:10px; border:1px solid var(--border);
+  background:#1f2533; color:var(--text); cursor:pointer;
+}
 
 .tree{padding:8px; overflow:auto; min-height:200px}
 .tree details{border:1px solid var(--border); border-radius:10px; padding:6px 8px; margin-bottom:6px}
