@@ -12,6 +12,7 @@
     <div class="spacer"></div>
     <div class="toolbar">
       <button id="btnImport" title="설교 불러오기(JSON)">불러오기</button>
+      <button id="btnInsert" title="본문 삽입">본문삽입</button>
       <button id="btnExport" title="설교 내보내기(JSON)">내보내기</button>
       <button id="btnClear"  title="로컬 저장 초기화">초기화</button>
       <div class="divider"></div>
@@ -22,27 +23,15 @@
 
   <main>
     <aside id="left">
-      <div class="panel head">
-        <div class="row">
-          <input id="refInput" placeholder="예: 창 1:1-3,6-8; 2:1" />
-          <button id="btnInsert">본문삽입</button>
-        </div>
-        <div class="row tiny">
-          <label><input type="checkbox" id="chkShowNum" checked> 절 번호 표시</label>
-          <label class="ml8">버전:
-            <select id="verTabs">
-              <option value="krv" selected>개역개정</option>
-              <option value="rnr">새번역</option>
-            </select>
-          </label>
-        </div>
-      </div>
+      <!-- 👇 본문삽입 관련 입력/옵션 패널 제거됨 -->
       <div id="tree" class="panel tree"></div>
       <div id="status" class="status"></div>
     </aside>
 
     <section id="editor">
-      <div class="panel head"><div>에디터 (자동저장됨)</div></div>
+      <div class="panel head">
+        <div>에디터 (자동저장됨)</div>
+      </div>
       <div id="doc" class="editor" contenteditable="true" spellcheck="false"></div>
     </section>
   </main>
